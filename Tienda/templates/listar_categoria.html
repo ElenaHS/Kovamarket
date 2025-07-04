@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Categorias</h1>
+    
+    <ul>
+        {% for categoria in categorias %}
+            <li>
+                <h2>{{ categoria.nombre }}</h2>
+                {% if categoria.imagen %}
+                    <img src="{{ categoria.imagen.url }}" alt="{{ categoria.nombre }}" width="150">
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}

@@ -1,0 +1,313 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KovaMarket{% endblock %}</title>
+
+    <!-- Bootstrap 5 y Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    
+    <style>
+        /* Estilo para que la navbar quede fija arriba */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        /* Padding para evitar que el contenido quede oculto tras la navbar y barra de categorías */
+        body {
+            padding-top: 96px; /* 56px navbar + 40px barra de categorías */
+        }
+
+        /* Estilo para la barra horizontal de categorías */
+        .categories-bar {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            width: 100%;
+            background-color: #f8f9fa;
+            z-index: 999;
+            border-bottom: 1px solid #ddd;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 5px 0;
+        }
+
+        /* Lista de categorías dentro de la barra */
+        .categories-bar ul {
+            margin: 0;
+            padding: 0 10px;
+            list-style: none;
+            display: flex;
+            flex-wrap: nowrap;
+        }
+
+        /* Estilo individual de cada categoría */
+        .categories-bar li {
+            padding: 10px 15px;
+            flex: 0 0 auto;
+        }
+
+        /* Enlaces de categoría (todos en negro por defecto) */
+        .categories-bar a {
+            text-decoration: none;
+            color: #000;  /* Negro */
+            font-weight: bold;
+        }
+
+        /* Categoría activa (seleccionada) */
+        .categories-bar a.active {
+            color: #fc7319 !important;  /* Naranja */
+        }
+
+        /* Hover de enlaces de categoría */
+        .categories-bar a:hover {
+            color: #fc7319;
+        }
+
+        /* Contenedor principal */
+        main {
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+
+        /* Footer fijo en la parte inferior */
+        footer {
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+
+        /* Contenedor de mensajes (flash messages) */
+        #message-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            max-width: 300px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 9999;
+        }
+
+        /* Mostrar el mensaje */
+        #message-container.show {
+            opacity: 1;
+        }
+
+        /* Estilo visual del mensaje */
+        .alert {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Botón personalizado color naranja */
+        .btn-kova {
+            background-color: #fc7319;
+            color: white;
+            border: 1px solid #fc7319;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Hover del botón naranja */
+        .btn-kova:hover {
+            background-color: #e36512;
+            border-color: #e36512;
+            color: white;
+        }
+
+        /* Botón naranja en contorno */
+        .btn-kova-outline {
+            background-color: transparent;
+            color: #fc7319;
+            border: 1px solid #fc7319;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Hover del botón contorno */
+        .btn-kova-outline:hover {
+            background-color: #fc7319;
+            color: white;
+        }
+        
+        .nav-link.active {
+            color:  #fc7319 !important;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <!-- Barra de navegación principal -->
+<nav class="navbar navbar-expand-lg bg-dark border-bottom border-body" data-bs-theme="dark">
+    <div class="container-fluid">
+        <!-- Enlace al inicio con el logo de la marca, ajustado para que encaje en la barra de navegación -->
+        <a class="navbar-brand" href="/">
+            <!-- Se ajusta la altura máxima del logo a 40px para que se vea más pequeño y proporcional -->
+            <img src="{% static 'images/logo-kovamarket-blanco-sin-fondo.png' %}" alt="Logo de Kovamarket" style="max-height: 40px;">
+        </a>
+
+        <!-- Botón hamburguesa para vista móvil -->
+        <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Menú colapsable -->
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                
+                <!-- Enlace a Inicio: se activa cuando la ruta es '/' -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Inicio</a>
+                </li>
+
+                <!-- Enlace a ¿Quiénes somos?: usa la ruta exacta -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/quienes-somos/' %}active{% endif %}" href="#">¿Quiénes somos?</a>
+                </li>
+
+                <!-- Enlace a Preguntas frecuentes -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/preguntas-frecuentes/' %}active{% endif %}" href="{% url 'preguntas_frecuentes' %}">Preguntas frecuentes</a>
+                </li>
+
+                <!-- Dropdown con lista de categorías -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {% if categoria_slug %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
+                        Categorías
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% for categoria in categorias %}
+                        <li>
+                            <a class="dropdown-item {% if categoria.slug == categoria_slug %}active{% endif %}" href="{% url 'producto_por_categoria' categoria.slug %}">
+                                {{ categoria.nombre }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+
+                <!-- Icono del carrito -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/carrito/' %}active{% endif %}" href="{% url 'ver_carrito' %}">
+                        <i class="bi bi-cart-fill"></i>
+                    </a>
+                </li>
+
+                <!-- Enlace a Gestion de ventas -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/ventas/' %}active{% endif %}" href="{% url 'gestionar_venta' %}">Gestión de ventas</a>
+                </li>
+
+                <!-- Acceso y sesión -->
+                {% if user.is_authenticated %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        Bienvenido: <strong>{{ request.user.username }}</strong>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="#">Perfil</a></li>
+                        <li><a class="dropdown-item" href="{% url 'cerrar_sesion' %}">Cerrar sesión</a></li>
+                    </ul>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/iniciar-sesion/' %}active{% endif %}" href="{% url 'iniciar_sesion' %}">Acceder</a>
+                </li>
+                {% endif %}
+            </ul>
+
+            <!-- Buscador de productos en la barra de navegación -->
+<form class="d-flex" role="search" action="{% url 'buscar_productos' %}" method="GET">
+    <!-- Campo de entrada de texto para búsqueda -->
+    <input class="form-control me-2" type="search" name="q" placeholder="Buscar productos..." aria-label="Buscar">
+    
+    <!-- Botón con estilo personalizado para enviar la búsqueda -->
+    <button class="btn btn-kova-outline" type="submit">Buscar</button>
+</form>
+        </div>
+    </div>
+</nav>
+
+
+    <!-- Barra horizontal de categorías debajo de la navbar -->
+<div class="categories-bar">
+    <ul>
+        <!-- Enlace para la categoría "Todo" -->
+        <li>
+            <!-- Solo se marca como activa si el slug es exactamente 'todo' -->
+            <a href="{% url 'listar_producto' 'todo' %}"
+               class="{% if categoria_slug == 'todo' %}active{% endif %}">
+               Todo
+            </a>
+        </li>
+
+        
+        <!-- Enlace fijo para la categoría "Venta de garaje" -->
+        <li>
+            <!-- Solo se marca como activa si el slug es exactamente 'venta-de-garaje' -->
+            <a href="{% url 'listar_producto' 'venta-de-garaje' %}"
+               class="{% if categoria_slug == 'venta-de-garaje' %}active{% endif %}">
+               Venta de garaje
+            </a>
+        </li>
+
+        <!-- Iterar sobre las categorías dinámicamente -->
+        {% for categoria in categorias %}
+        <li>
+            <!-- Marcar como activa la categoría seleccionada según el slug -->
+            <a href="{% url 'listar_producto' categoria.slug %}"
+               class="{% if categoria.slug == categoria_slug %}active{% endif %}">
+               {{ categoria.nombre }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+    <!-- Contenido principal -->
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Mensajes flash en la esquina inferior izquierda -->
+    {% if messages %}
+    <div id="message-container" class="alert alert-success show" role="alert">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Pie de página -->
+    <footer class="bg-dark text-light text-center py-4 mt-auto">
+        <div class="container">
+            <p>&copy; 2025 Kovamarket. Todos los derechos reservados.</p>
+            <ul class="list-inline">
+                <li class="list-inline-item"><a href="#" class="text-light">Privacy Policy</a></li>
+                <li class="list-inline-item"><a href="#" class="text-light">Terms of Service</a></li>
+                <li class="list-inline-item"><a href="#" class="text-light">Contact Us</a></li>
+            </ul>
+            <div class="mt-2">
+                <a href="#" class="text-light mx-2"><i class="bi bi-twitter"></i> Twitter</a>
+                <a href="#" class="text-light mx-2"><i class="bi bi-facebook"></i> Facebook</a>
+                <a href="#" class="text-light mx-2"><i class="bi bi-instagram"></i> Instagram</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script de Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

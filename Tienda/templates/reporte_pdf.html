@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reporte de Ventas</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+        th { background-color: #f0f0f0; }
+        h2 { text-align: center; }
+    </style>
+</head>
+<body>
+    <h2>Reporte de Ventas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Forma de pago</th>
+                <th>Total</th>
+                <th>Código transferencia</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for venta in ventas %}
+            <tr>
+                <td>{{ venta.id }}</td>
+                <td>{{ venta.fecha|date:"Y-m-d H:i" }}</td>
+                <td>{{ venta.forma_pago }}</td>
+                <td>${{ venta.total_a_pagar|floatformat:2 }}</td>
+                <td>{{ venta.codigo_transferencia|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

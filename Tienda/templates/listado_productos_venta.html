@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Nueva Venta{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2 class="text-center mb-4">Nueva Venta - Selecciona Productos</h2>
+
+    <!-- Mensajes -->
+    {% if messages %}
+        <div class="alert-container mb-4">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Tabla de productos -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Agregar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <tr>
+                    <td>
+                        <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                    </td>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.cantidad }}</td>
+                    <td>${{ producto.precio }}</td>
+                    <td>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                            <button type="submit" class="btn btn-kova">Agregar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No hay productos disponibles.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Productos añadidos -->
+    <hr>
+    <h4 class="mt-5">Productos añadidos a esta venta:</h4>
+    {% if items_actuales %}
+    <ul class="list-group mb-5">
+        {% for item in items_actuales %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ item.producto.nombre }}
+                <span class="badge bg-primary rounded-pill">{{ item.cantidad }} unidades</span>
+            </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+        <p class="text-muted">No has agregado productos aún.</p>
+    {% endif %}
+
+</div>
+
+<!-- Estilo personalizado -->
+<style>
+    .btn-kova {
+        background-color: #fc7319;
+        color: white;
+        border: 1px solid #fc7319;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .btn-kova:hover {
+        background-color: #e36512;
+        border-color: #e36512;
+        color: white;
+    }
+</style>
+{% endblock %}

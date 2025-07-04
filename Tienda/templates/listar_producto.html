@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Productos{% if categoria %} en {{ categoria.nombre }}{% endif %}</h1>
+    
+    <ul>
+        {% for producto in productos %}
+            <li>
+                <h2>{{ producto.nombre }}</h2>
+                <p>{{ producto.descripcion }}</p>
+                <p>Precio: ${{ producto.precio }}</p>
+                {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" width="150">
+                {% endif %}
+            </li>
+        {% empty %}
+            <li>No hay productos disponibles en esta categoría.</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Categorías</h3>
+    <ul>
+        {% for cat in categorias %}
+            <li><a href="{% url 'producto_por_categoria' cat.slug %}">{{ cat.nombre }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid altura-ajustada d-flex justify-content-center align-items-center">
+    <div class="col-11 col-sm-9 col-md-7 col-lg-6 col-xl-5">
+        <div class="card shadow-lg p-4">
+            <img src="{% static 'images/logo-kovamarket.png' %}" alt="Logo de Kovamarket"
+            class="mb-3 d-block mx-auto"
+            style="width: 100px; height: 100px; object-fit: contain;">
+        
+            <h6 class="text-center mb-4">Cree una cuenta para comenzar a utilizar los servicios de Kovamarket</h6>
+            
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                  <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+            
+            <form method="POST">
+              {% csrf_token %}
+              <div class="row">
+                  <div class="col-12 col-md-6 mb-3">
+                      {{ form.first_name.label_tag }}
+                      {{ form.first_name }}
+                      {% for error in form.first_name.errors %}
+                          <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                  </div>
+                  <div class="col-12 col-md-6 mb-3">
+                      {{ form.last_name.label_tag }}
+                      {{ form.last_name }}
+                      {% for error in form.last_name.errors %}
+                          <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                  </div>
+                  <div class="col-12 col-md-6 mb-3">
+                      {{ form.username.label_tag }}
+                      {{ form.username }}
+                      {% for error in form.username.errors %}
+                          <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                  </div>
+                  <div class="col-12 col-md-6 mb-3">
+                      {{ form.email.label_tag }}
+                      {{ form.email }}
+                      {% for error in form.email.errors %}
+                          <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                  </div>
+                  <div class="col-12 col-md-6 mb-3">
+                      {{ form.password1.label_tag }}
+                      {{ form.password1 }}
+                      {% for error in form.password1.errors %}
+                          <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                  </div>
+                  <div class="col-12 col-md-6 mb-3">
+                      {{ form.password2.label_tag }}
+                      {{ form.password2 }}
+                      {% for error in form.password2.errors %}
+                          <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                  </div>
+              </div>
+              <div class="d-grid mb-4">
+                  <button type="submit" class="btn btn-kova">Registrarse</button>
+              </div>
+              <div class="text-center">
+                <span>¿Ya tienes una cuenta?
+                  <a href="{% url 'login' %}" class="link-kova">Inicia sesión</a>
+                </span>
+              </div>
+            </form>
+          
+        </div>
+    </div>
+</div>
+
+<style>
+  /* Altura responsiva */
+  .altura-ajustada {
+    min-height: 100vh;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  @media (max-width: 576px) {
+    .altura-ajustada {
+      padding-top: 4rem;
+      padding-bottom: 6rem;
+    }
+  }
+
+  /* Botones */
+  .btn-kova {
+    background-color: #fc7319;
+    color: white;
+    border: 1px solid #fc7319;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .btn-kova:hover {
+    background-color: #e36512;
+    border-color: #e36512;
+    color: white;
+  }
+
+  .btn-kova-outline {
+    background-color: transparent;
+    color: #fc7319;
+    border: 1px solid #fc7319;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .btn-kova-outline:hover {
+    background-color: #fc7319;
+    color: white;
+  }
+
+  .link-kova {
+    color: #fc7319;
+    text-decoration: underline;
+  }
+
+  .link-kova:hover {
+    color: #e86210;
+    text-decoration: underline;
+  }
+</style>
+
+{% endblock %}

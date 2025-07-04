@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    .agotado {
+        color: red;
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .btn-disabled {
+        background-color: #ccc;
+        border: 1px solid #ccc;
+        color: #666;
+        pointer-events: none;
+        cursor: not-allowed;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .fixed-card {
+        width: 100%;
+        max-width: 250px;
+        height: auto;
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    .fixed-img {
+        height: 220px;
+        object-fit: cover;
+    }
+
+    .card-body {
+        padding: 10px;
+        text-align: center;
+    }
+
+    .breadcrumb {
+        background-color: transparent;
+        padding-left: 0;
+        margin-bottom: 10px;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+    }
+
+    .btn-kova {
+        background-color: #fc7319;
+        color: white;
+        border: 1px solid #fc7319;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-kova:hover {
+        background-color: #e36512;
+        border-color: #e36512;
+        color: white;
+    }
+
+    .btn-kova-outline {
+        background-color: white;
+        color: #fc7319;
+        border: 1px solid #fc7319;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-kova-outline:hover {
+        background-color: #fc7319;
+        color: white;
+    }
+
+    .btn-kova i,
+    .btn-kova-outline i {
+        margin-right: 5px;
+    }
+
+    @media (max-width: 768px), (max-width: 576px) {
+        .col-6 {
+            width: 50%;
+        }
+    }
+</style>
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/" style="color: black; text-decoration: none;">Inicio</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Resultados de búsqueda</li>
+        </ol>
+    </nav>
+
+    <!-- Título de búsqueda -->
+    <h2>Resultados para "{{ query }}"</h2>
+
+    {% if resultados %}
+        <!-- Tarjetas de resultados -->
+        <div class="row mt-3">
+            {% for producto in resultados %}
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+                    <div class="card fixed-card">
+                        {% if producto.imagen %}
+                            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="card-img-top fixed-img">
+                        {% else %}
+                            <img src="/media/default.png" alt="Imagen no disponible" class="card-img-top fixed-img">
+                        {% endif %}
+                        <div class="card-body p-2">
+                            <h6 class="mb-1">{{ producto.nombre }}</h6>
+                            <p class="card-text mb-0 font-weight-bold text-dark">${{ producto.precio }} CUP</p>
+
+                            <div class="d-flex justify-content-center gap-2 mt-2">
+                                <a href="{% url 'producto_detalle' producto.id %}" class="btn btn-kova-outline">
+                                    <i class="bi bi-eye-fill"></i> Detalles
+                                </a>
+
+                                {% if producto.disponibilidad %}
+                                    <form method="post" action="{% url 'agregar_al_carrito' producto.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-kova">
+                                            <i class="bi bi-cart-plus-fill"></i> Añadir
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="btn btn-disabled">Agotado</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Si no hay resultados -->
+        <div class="alert alert-warning mt-4">
+            No se encontraron productos que coincidan con tu búsqueda.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

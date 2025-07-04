@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nueva Venta{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Mensajes -->
+    {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Tabla de productos -->
+    <div class="table-responsive mb-4">
+        <table class="table table-hover align-middle text-center shadow-sm rounded overflow-hidden">
+            <thead class="table-light text-uppercase text-secondary">
+                <tr>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Agregar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <tr>
+                    <td>
+                        <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                    </td>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.cantidad }}</td>
+                    <td class="fw-bold text-kova">${{ producto.precio }}</td>
+                    <td>
+                        <form method="post" action="{% url 'agregar_producto_venta' producto.id %}" onsubmit="this.querySelector('button').disabled = true;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-kova btn-sm">Agregar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-muted">No hay productos disponibles.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="d-flex justify-content-center mb-4">
+        <nav>
+            <ul class="pagination">
+                {% if productos.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ productos.previous_page_number }}">&laquo;</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+
+                {% for num in productos.paginator.page_range %}
+                    <li class="page-item {% if productos.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endfor %}
+
+                {% if productos.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ productos.next_page_number }}">&raquo;</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Productos añadidos -->
+    <h5 class="text-kova mb-3">Productos añadidos</h5>
+    {% if items %}
+    <div class="row">
+        {% for item in items %}
+        <div class="col-md-6 mb-3">
+            <div class="card h-100 flex-row align-items-center shadow-sm p-2 border-light">
+                <img src="{{ item.producto.imagen_url }}" alt="{{ item.producto.nombre }}" class="rounded" style="width: 90px; height: 90px; object-fit: cover;">
+                <div class="card-body ms-3 p-2">
+                    <h6 class="card-title mb-1">{{ item.producto.nombre }}</h6>
+                    <p class="mb-1 text-muted">Precio: ${{ item.producto.precio }}</p>
+                    <div class="d-flex align-items-center mb-2">
+                        <form action="{% url 'disminuir_cantidad_venta' item.id %}" method="post" class="me-2" onsubmit="this.querySelector('button').disabled = true;">
+                            {% csrf_token %}
+                            <button class="btn btn-outline-secondary btn-sm">−</button>
+                        </form>
+
+                        <span class="fw-bold">{{ item.cantidad }}</span>
+
+                        <form action="{% url 'aumentar_cantidad_venta' item.id %}" method="post" class="ms-2" onsubmit="this.querySelector('button').disabled = true;">
+                            {% csrf_token %}
+                            <button class="btn btn-outline-secondary btn-sm" {% if item.cantidad >= item.producto.cantidad %}disabled{% endif %}>+</button>
+                        </form>
+                    </div>
+                    <p class="fw-bold text-kova small">Subtotal: ${{ item.subtotal|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p class="text-muted">No has agregado productos aún.</p>
+    {% endif %}
+
+    <!-- Total -->
+    <div class="text-end mt-3 mb-4">
+        <h4>Total a pagar: <span class="text-kova fw-bold">${{ precio_total }}</span></h4>
+    </div>
+
+    <!-- Formulario para Confirmar Venta -->
+    <form method="POST" class="card p-4 shadow-sm mb-3 border-light" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+        {% csrf_token %}
+        <div class="mb-3"><strong>Dependienta:</strong> {{ usuario.username }}</div>
+
+        <h5 class="text-kova">Información de la venta</h5>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                {{ venta_form.forma_pago.label_tag }}
+                {{ venta_form.forma_pago }}
+            </div>
+            <div class="col-md-6 mb-3">
+                {{ venta_form.codigo_transferencia.label_tag }}
+                {{ venta_form.codigo_transferencia }}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center gap-2">
+            <button type="submit" class="btn btn-kova">Confirmar venta</button>
+        </div>
+    </form>
+
+    <!-- Formulario para Cancelar Venta -->
+    <form method="post" action="{% url 'cancelar_venta' %}" class="text-center mb-5" onsubmit="return confirm('¿Estás segura de que deseas cancelar esta venta? Esta acción no se puede deshacer.');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger">Cancelar venta</button>
+    </form>
+
+</div>
+
+<!-- JavaScript para activar/desactivar el campo de transferencia -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const formaPagoSelect = document.getElementById("id_forma_pago");
+        const codigoTransferenciaInput = document.getElementById("id_codigo_transferencia");
+
+        function toggleCodigoTransferencia() {
+            const valor = formaPagoSelect.value;
+            if (valor.toLowerCase() === "transferencia") {
+                codigoTransferenciaInput.disabled = false;
+                codigoTransferenciaInput.required = true;
+            } else {
+                codigoTransferenciaInput.disabled = true;
+                codigoTransferenciaInput.required = false;
+                codigoTransferenciaInput.value = "";
+            }
+        }
+
+        toggleCodigoTransferencia();
+        formaPagoSelect.addEventListener("change", toggleCodigoTransferencia);
+    });
+</script>
+
+<!-- Estilos -->
+<style>
+    .btn-kova {
+        background-color: #fc7319;
+        color: white;
+        border: 1px solid #fc7319;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .btn-kova:hover {
+        background-color: #e36512;
+        border-color: #e36512;
+        color: white;
+    }
+    .text-kova {
+        color: #fc7319;
+    }
+    .table th, .table td {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}

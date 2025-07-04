@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="producto-detalle d-flex flex-wrap align-items-start gap-4">
+        <!-- Imagen del producto -->
+        <div class="producto-imagen">
+            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+        </div>
+
+        <!-- Detalles del producto -->
+        <div class="producto-info">
+            <h1 class="producto-nombre">{{ producto.nombre }}</h1>
+            <p class="producto-precio">${{ producto.precio }} CUP</p>
+
+            {% if producto.fecha_vencimiento %}
+            <p><strong>Fecha de vencimiento:</strong>
+                <span class="text-danger">{{ producto.fecha_vencimiento|date:"d/m/Y" }}</span>
+            </p>
+            {% endif %}
+
+            <p><strong>Categoría:</strong> <span class="text-gray">{{ producto.categoria.nombre }}</span></p>
+            <p><strong>Marca:</strong> <span class="text-gray">{{ producto.marca.nombre|default:"No disponible" }}</span></p>
+            <p><strong>Tamaño:</strong> <span class="text-gray">{{ producto.tamaño|default:"No especificado" }}</span></p>
+            <p><strong>Medida:</strong> <span class="text-gray">{{ producto.medida }}</span></p>
+
+            <p><strong>Opción de mensajería:</strong>
+                {% if producto.opcion_mensajeria %}
+                    <span class="text-success">Sí</span>
+                {% else %}
+                    <span class="text-danger">No</span>
+                {% endif %}
+            </p>
+
+            <p class="producto-descripcion">{{ producto.descripcion }}</p>
+
+            <div class="mt-4">
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left-short"></i> Volver
+                </a>
+                <a href="/" class="btn btn-kova">
+                    <i class="bi bi-cart-plus-fill"></i> Añadir al carrito
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos -->
+<style>
+    .producto-detalle {
+        margin-bottom: 60px;
+    }
+
+    .producto-imagen {
+        width: 300px;
+        height: 400px; /* Más alta: antes era 225px */
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        flex-shrink: 0;
+        background-color: #f5f5f5;
+    }
+
+    .producto-imagen img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .producto-info {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .producto-nombre {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #fc7319;
+        margin-bottom: 10px;
+    }
+
+    .producto-precio {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #000;
+        margin-bottom: 15px;
+    }
+
+    .producto-descripcion {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-top: 20px;
+    }
+
+    .text-gray {
+        color: #6c757d;
+    }
+
+    .btn-kova {
+        background-color: #fc7319;
+        color: white;
+        border: 1px solid #fc7319;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-kova:hover {
+        background-color: #e36512;
+        border-color: #e36512;
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    @media (max-width: 768px) {
+        .producto-detalle {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .producto-imagen {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 3 / 4; /* Proporción vertical */
+        }
+
+        .producto-info {
+            text-align: center;
+        }
+
+        .producto-nombre {
+            font-size: 1.6rem;
+        }
+
+        .producto-precio {
+            font-size: 1.3rem;
+        }
+    }
+</style>
+{% endblock %}
+

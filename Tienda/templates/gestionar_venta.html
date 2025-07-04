@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold">Gestión de Ventas</h2>
+        <a href="{% url 'nueva_venta' %}" class="btn btn-success shadow-sm">
+            <i class="fas fa-plus-circle me-2"></i> Nueva venta
+        </a>
+    </div>
+
+    <!-- Formulario para generar reporte -->
+    <form method="get" action="{% url 'generar_reporte_pdf' %}" class="card p-3 shadow-sm mb-4 border-light">
+        <div class="row align-items-end">
+            <div class="col-md-3">
+                <label for="filtro" class="form-label">Tipo de filtro</label>
+                <select id="filtro" name="filtro" class="form-select" required onchange="mostrarCampoFiltro()">
+                    <option value="" selected disabled>Selecciona uno</option>
+                    <option value="dia">Día</option>
+                    <option value="semana">Semana</option>
+                    <option value="mes">Mes</option>
+                    <option value="año">Año</option>
+                </select>
+            </div>
+
+            <div class="col-md-4" id="campo-filtro-container">
+                <!-- Este campo se reemplaza dinámicamente con JS -->
+            </div>
+
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-danger w-100">
+                    <i class="fas fa-file-pdf me-1"></i> Generar reporte
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Tabla de ventas -->
+    {% if ventas %}
+    <div class="table-responsive shadow-sm border rounded">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Forma de pago</th>
+                    <th>Total</th>
+                    <th>Código de transferencia</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for venta in ventas %}
+                <tr>
+                    <td>{{ venta.id }}</td>
+                    <td>{{ venta.fecha|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if venta.forma_pago == "efectivo" %}
+                            <span class="badge bg-success"><i class="fas fa-money-bill-wave me-1"></i> Efectivo</span>
+                        {% elif venta.forma_pago == "transferencia" %}
+                            <span class="badge bg-info text-dark"><i class="fas fa-university me-1"></i> Transferencia</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-bold text-kova">${{ venta.total_a_pagar|floatformat:2 }}</td>
+                    <td>
+                        {% if venta.codigo_transferencia %}
+                            <code>{{ venta.codigo_transferencia }}</code>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'detalle_venta' venta.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i> Ver detalles
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <p class="text-muted mb-0">No has realizado ninguna venta aún. Puedes registrar una nueva venta usando el botón superior.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JS para mostrar el campo de filtro según la opción seleccionada -->
+<script>
+    function mostrarCampoFiltro() {
+        const filtro = document.getElementById('filtro').value;
+        const container = document.getElementById('campo-filtro-container');
+
+        let inputHtml = '';
+        const hoy = new Date().toISOString().split('T')[0];
+
+        if (filtro === 'dia') {
+            inputHtml = `
+                <label for="valor" class="form-label">Selecciona un día</label>
+                <input type="date" id="valor" name="valor" class="form-control" max="${hoy}" required>
+            `;
+        } else if (filtro === 'semana') {
+            inputHtml = `
+                <label for="valor" class="form-label">Selecciona una semana</label>
+                <input type="week" id="valor" name="valor" class="form-control" required>
+            `;
+        } else if (filtro === 'mes') {
+            inputHtml = `
+                <label for="valor" class="form-label">Selecciona un mes</label>
+                <input type="month" id="valor" name="valor" class="form-control" required>
+            `;
+        } else if (filtro === 'año') {
+            inputHtml = `
+                <label for="valor" class="form-label">Selecciona un año</label>
+                <input type="number" id="valor" name="valor" class="form-control" min="2000" max="2100" step="1" placeholder="Ej: 2025" required>
+            `;
+        }
+
+        container.innerHTML = inputHtml;
+    }
+</script>
+{% endblock %}

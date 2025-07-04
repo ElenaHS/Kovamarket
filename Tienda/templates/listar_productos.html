@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .agotado {
+        color: red;
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .btn-disabled {
+        background-color: #ccc;
+        border: 1px solid #ccc;
+        color: #666;
+        pointer-events: none;
+        cursor: not-allowed;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .fixed-card {
+        width: 100%;
+        max-width: 250px;
+        height: auto;
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    /* 🔧 Imagen más alargada para mejor visualización (220px) */
+    .fixed-img {
+        height: 220px;
+        object-fit: cover;
+    }
+
+    .card-body {
+        padding: 10px;
+        text-align: center;
+    }
+
+    .ordenar-marco {
+        border: 2px solid #fc7319;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb {
+        background-color: transparent;
+        padding-left: 0;
+        margin-bottom: 10px;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+    }
+
+    @media (max-width: 768px), (max-width: 576px) {
+        .col-6 {
+            width: 50%;
+        }
+    }
+
+    /* Botón naranja */
+    .btn-kova {
+        background-color: #fc7319;
+        color: white;
+        border: 1px solid #fc7319;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-kova:hover {
+        background-color: #e36512;
+        border-color: #e36512;
+        color: white;
+    }
+
+    /* Botón Detalles solo con borde */
+    .btn-kova-outline {
+        background-color: white;
+        color: #fc7319;
+        border: 1px solid #fc7319;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-kova-outline:hover {
+        background-color: #fc7319;
+        color: white;
+    }
+
+    .btn-kova i,
+    .btn-kova-outline i {
+        margin-right: 5px;
+    }
+</style>
+
+
+<div class="container mt-4">
+    <!-- Ruta de navegación -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/" style="color: black; text-decoration: none;">Inicio</a>
+            </li>
+            {% if categoria %}
+                <li class="breadcrumb-item active" aria-current="page">{{ categoria.nombre }}</li>
+            {% else %}
+                <li class="breadcrumb-item active" aria-current="page">Productos</li>
+            {% endif %}
+        </ol>
+    </nav>
+
+    <!-- Fila de orden y total -->
+    <div class="ordenar-marco">
+        <form method="get">
+            <label for="ordenar" class="mr-2">Ordenar por:</label>
+            <select name="ordenar" id="ordenar" onchange="this.form.submit()">
+                <option value="nombre" {% if request.GET.ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
+                <option value="precio_asc" {% if request.GET.ordenar == 'precio_asc' %}selected{% endif %}>Menor precio</option>
+                <option value="precio_desc" {% if request.GET.ordenar == 'precio_desc' %}selected{% endif %}>Mayor precio</option>
+                <option value="nuevo" {% if request.GET.ordenar == 'nuevo' %}selected{% endif %}>Más nuevo</option>
+            </select>
+        </form>
+
+        <div class="text-muted">
+            Mostrando {{ productos.start_index }}-{{ productos.end_index }} de {{ productos.paginator.count }} resultados
+        </div>
+    </div>
+
+    <!-- Tarjetas de productos -->
+    <div class="row">
+        {% for producto in productos %}
+            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+                <div class="card fixed-card">
+                    {% if producto.imagen %}
+                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="card-img-top fixed-img">
+                    {% else %}
+                        <img src="/media/default.png" alt="Imagen no disponible" class="card-img-top fixed-img">
+                    {% endif %}
+                    <div class="card-body p-2">
+                        <!-- Nombre del producto -->
+                        <h6 class="mb-1">{{ producto.nombre }}</h6>
+
+                        <!-- Precio (color negro) -->
+                        <p class="card-text mb-0 font-weight-bold text-dark">${{ producto.precio }} CUP</p>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-center gap-2 mt-2">
+                            <a href="{% url 'producto_detalle' producto.id %}" class="btn btn-kova-outline">
+                                <i class="bi bi-eye-fill"></i> Detalles
+                            </a>
+
+                            {% if producto.disponibilidad %}
+                                <form method="post" action="{% url 'agregar_al_carrito' producto.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-kova">
+                                        <i class="bi bi-cart-plus-fill"></i> Añadir
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="btn btn-disabled">
+                                     Agotado
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if productos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ productos.previous_page_number }}&ordenar={{ request.GET.ordenar }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link" aria-hidden="true">&laquo;</span></li>
+                {% endif %}
+
+                {% for num in productos.paginator.page_range %}
+                    {% if productos.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}&ordenar={{ request.GET.ordenar }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if productos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ productos.next_page_number }}&ordenar={{ request.GET.ordenar }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link" aria-hidden="true">&raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}

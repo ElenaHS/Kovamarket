@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load static %}
+<title>{% block title %}Inicio{% endblock %}
+
+{% block content %}
+
+<!-- Estilos adicionales para el carrusel y las categorías -->
+<style>
+    /* Carrusel */
+    #carouselExampleAutoplaying {
+        width: 100%;  /* Asegura que el carrusel ocupe todo el ancho de la pantalla */
+        margin: 0 auto;
+    }
+
+    #carouselExampleAutoplaying .carousel-inner {
+        height: 350px;
+    }
+
+    #carouselExampleAutoplaying .carousel-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Ajuste para la vista móvil */
+    @media (max-width: 768px) {
+        #carouselExampleAutoplaying .carousel-inner {
+            height: 250px;  /* Menor altura en móvil */
+        }
+
+        /* Eliminar el espacio entre el carrusel y las categorías */
+        .categories-scroll {
+            margin-top: 0 !important;  /* Elimina el margen superior innecesario */
+            padding-top: 0 !important; /* Elimina cualquier padding extra */
+            margin-bottom: 0 !important;  /* Elimina el margen inferior en móvil */
+        }
+    }
+
+    /* Scroll horizontal para categorías */
+    .categories-scroll {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 10px;
+        margin-top: 20px; /* Ajuste en vista escritorio, lo cambiamos en móvil */
+    }
+
+    .categories-scroll .row {
+        display: inline-flex;
+    }
+
+    .categories-scroll .col {
+        display: inline-block;
+        margin-right: 15px;
+    }
+
+    .categories-scroll .img-fluid {
+        object-fit: cover;
+        width: 100px;
+        height: 100px;
+    }
+
+    /* Estilo para los enlaces de categoría */
+    .categoria-enlace {
+        text-decoration: none !important; /* Aseguramos que no haya subrayado */
+    }
+
+    /* Estilo para el texto del nombre de categoría */
+    .categoria-nombre {
+        color: #000 !important; /* Color negro */
+        font-size: 0.9rem !important; /* Tamaño de letra más pequeño */
+        margin: 0;
+        padding: 0;
+        transition: color 0.3s ease;
+    }
+
+    /* Hover sobre el enlace cambia el color del texto */
+    .categoria-enlace:hover .categoria-nombre {
+        color: #fc7319 !important;
+    }
+
+    /* Ajustes adicionales en móvil */
+    @media (max-width: 576px) {
+        .categories-scroll .row {
+            flex-wrap: nowrap;
+        }
+        .categories-scroll .col {
+            flex: 0 0 auto; /* Evita que las columnas se reorganicen */
+        }
+        .categories-scroll .img-fluid {
+            width: 80px;  /* Menor tamaño para imágenes en móvil */
+            height: 80px;
+        }
+
+        /* Reducir el margen entre el carrusel y las categorías en móvil */
+        .categories-scroll {
+            margin-top: 5px !important;  /* Espacio más pequeño entre el carrusel y las categorías */
+        }
+    }
+</style>
+
+<!-- Carrusel -->
+<div id="carouselExampleAutoplaying" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <img src="{% static 'images/PRODUCTOS AZUFRADOS.png' %}" class="d-block w-100" alt="Imagen 1">
+        </div>
+        <div class="carousel-item">
+            <img src="{% static 'images/imagen2.png' %}" class="d-block w-100" alt="Imagen 2">
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+
+<!-- Categorías -->
+<div class="container mt-5">
+    <div class="categories-scroll">
+        <div class="row row-cols-auto g-1">
+            {% for categoria in categorias %}
+                <div class="col d-flex justify-content-center">
+                    <a href="{% url 'producto_por_categoria' categoria_slug=categoria.slug %}" class="categoria-enlace text-center">
+                        <img src="{{ categoria.imagen.url }}" alt="{{ categoria.nombre }}" class="img-fluid rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+                        <p class="categoria-nombre">{{ categoria.nombre }}</p>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
