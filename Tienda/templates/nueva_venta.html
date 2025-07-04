@@ -113,7 +113,8 @@
 
     <!-- Total -->
     <div class="text-end mt-3 mb-4">
-        <h4>Total a pagar: <span class="text-kova fw-bold">${{ precio_total }}</span></h4>
+        <h4>Tota: <span class="text-muted">${{ precio_total|floatformat:2 }}</span></h4>
+        <h4 id="total-con-descuento" class="text-kova fw-bold"></h4>
     </div>
 
     <!-- Formulario para Confirmar Venta -->
@@ -146,11 +147,13 @@
 
 </div>
 
-<!-- JavaScript para activar/desactivar el campo de transferencia -->
+<!-- JavaScript -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const formaPagoSelect = document.getElementById("id_forma_pago");
         const codigoTransferenciaInput = document.getElementById("id_codigo_transferencia");
+        const totalConDescuento = document.getElementById("total-con-descuento");
+        const totalSinDescuento = parseFloat("{{ precio_total|floatformat:2 }}");
 
         function toggleCodigoTransferencia() {
             const valor = formaPagoSelect.value;
@@ -164,8 +167,24 @@
             }
         }
 
+        function actualizarTotal() {
+            const valor = formaPagoSelect.value.toLowerCase();
+            if (valor === "efectivo") {
+                const descuento = totalSinDescuento * 0.05;
+                const totalFinal = (totalSinDescuento - descuento).toFixed(2);
+                totalConDescuento.innerHTML = `Total con 5% de descuento: $${totalFinal}`;
+            } else {
+                totalConDescuento.innerHTML = "";
+            }
+        }
+
         toggleCodigoTransferencia();
-        formaPagoSelect.addEventListener("change", toggleCodigoTransferencia);
+        actualizarTotal();
+
+        formaPagoSelect.addEventListener("change", function () {
+            toggleCodigoTransferencia();
+            actualizarTotal();
+        });
     });
 </script>
 

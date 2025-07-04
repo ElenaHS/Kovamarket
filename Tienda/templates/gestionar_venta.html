@@ -2,10 +2,11 @@
 
 {% block content %}
 <div class="container mt-5">
+
     <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-secondary fw-bold">Gestión de Ventas</h2>
-        <a href="{% url 'nueva_venta' %}" class="btn btn-success shadow-sm">
+        <h2 class="fw-bold text-kova">Gestión de Ventas</h2>
+        <a href="{% url 'nueva_venta' %}" class="btn btn-kova shadow-sm">
             <i class="fas fa-plus-circle me-2"></i> Nueva venta
         </a>
     </div>
@@ -14,7 +15,7 @@
     <form method="get" action="{% url 'generar_reporte_pdf' %}" class="card p-3 shadow-sm mb-4 border-light">
         <div class="row align-items-end">
             <div class="col-md-3">
-                <label for="filtro" class="form-label">Tipo de filtro</label>
+                <label for="filtro" class="form-label text-secondary">Tipo de filtro</label>
                 <select id="filtro" name="filtro" class="form-select" required onchange="mostrarCampoFiltro()">
                     <option value="" selected disabled>Selecciona uno</option>
                     <option value="dia">Día</option>
@@ -25,12 +26,12 @@
             </div>
 
             <div class="col-md-4" id="campo-filtro-container">
-                <!-- Este campo se reemplaza dinámicamente con JS -->
+                <!-- Campo dinámico con JS -->
             </div>
 
             <div class="col-md-3">
-                <button type="submit" class="btn btn-outline-danger w-100">
-                    <i class="fas fa-file-pdf me-1"></i> Generar reporte
+                <button type="submit" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-file-pdf me-2"></i> Generar reporte
                 </button>
             </div>
         </div>
@@ -40,7 +41,7 @@
     {% if ventas %}
     <div class="table-responsive shadow-sm border rounded">
         <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+            <thead class="table-light text-uppercase text-secondary">
                 <tr>
                     <th>#</th>
                     <th>Fecha</th>
@@ -71,7 +72,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{% url 'detalle_venta' venta.id %}" class="btn btn-outline-primary btn-sm">
+                        <a href="{% url 'detalle_venta' venta.id %}" class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-eye me-1"></i> Ver detalles
                         </a>
                     </td>
@@ -83,39 +84,41 @@
     {% else %}
     <div class="card shadow-sm">
         <div class="card-body">
-            <p class="text-muted mb-0">No has realizado ninguna venta aún. Puedes registrar una nueva venta usando el botón superior.</p>
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                No has realizado ninguna venta aún. Puedes registrar una nueva venta usando el botón superior.
+            </p>
         </div>
     </div>
     {% endif %}
 </div>
 
-<!-- JS para mostrar el campo de filtro según la opción seleccionada -->
+<!-- JavaScript para el filtro -->
 <script>
     function mostrarCampoFiltro() {
         const filtro = document.getElementById('filtro').value;
         const container = document.getElementById('campo-filtro-container');
-
         let inputHtml = '';
         const hoy = new Date().toISOString().split('T')[0];
 
         if (filtro === 'dia') {
             inputHtml = `
-                <label for="valor" class="form-label">Selecciona un día</label>
+                <label for="valor" class="form-label text-secondary">Selecciona un día</label>
                 <input type="date" id="valor" name="valor" class="form-control" max="${hoy}" required>
             `;
         } else if (filtro === 'semana') {
             inputHtml = `
-                <label for="valor" class="form-label">Selecciona una semana</label>
+                <label for="valor" class="form-label text-secondary">Selecciona una semana</label>
                 <input type="week" id="valor" name="valor" class="form-control" required>
             `;
         } else if (filtro === 'mes') {
             inputHtml = `
-                <label for="valor" class="form-label">Selecciona un mes</label>
+                <label for="valor" class="form-label text-secondary">Selecciona un mes</label>
                 <input type="month" id="valor" name="valor" class="form-control" required>
             `;
         } else if (filtro === 'año') {
             inputHtml = `
-                <label for="valor" class="form-label">Selecciona un año</label>
+                <label for="valor" class="form-label text-secondary">Selecciona un año</label>
                 <input type="number" id="valor" name="valor" class="form-control" min="2000" max="2100" step="1" placeholder="Ej: 2025" required>
             `;
         }
@@ -123,4 +126,28 @@
         container.innerHTML = inputHtml;
     }
 </script>
+
+<!-- Estilos -->
+<style>
+    .btn-kova {
+        background-color: #fc7319;
+        color: white;
+        border: 1px solid #fc7319;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .btn-kova:hover {
+        background-color: #e36512;
+        border-color: #e36512;
+        color: white;
+    }
+
+    .text-kova {
+        color: #fc7319;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+    }
+</style>
 {% endblock %}

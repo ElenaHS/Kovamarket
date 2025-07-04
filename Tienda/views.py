@@ -16,6 +16,8 @@ from django.utils import timezone
 from xhtml2pdf import pisa
 from django.http import HttpResponse
 from django.template.loader import get_template
+from decimal import Decimal
+
 
 
 
@@ -326,27 +328,39 @@ def filtrar_ventas_por_filtro(filtro, valor):
 
 
 
-
 # Vista para mostrar y confirmar una nueva venta
 @login_required
 @solo_superusuario
 def nueva_venta(request):
     venta_temp, _ = VentaTemporal.objects.get_or_create(dependienta=request.user)
     items_actuales = venta_temp.items.select_related("producto")
+    
+    # Precio sin descuento
     precio_total = sum(item.producto.precio * item.cantidad for item in items_actuales)
 
     if request.method == "POST":
         venta_form = VentaForm(request.POST)
         if venta_form.is_valid():
-            # ✅ Crear la venta con el total calculado
+            forma_pago = venta_form.cleaned_data["forma_pago"]
+            codigo_transferencia = venta_form.cleaned_data["codigo_transferencia"]
+
+            # Aplicar 5% de descuento si la forma de pago es efectivo
+            if forma_pago == "efectivo":
+                total_con_descuento = (precio_total * Decimal('0.95')).quantize(Decimal('0.01'))
+
+            else:
+                total_con_descuento = precio_total
+
+            # ✅ Crear la venta con el total ajustado
             venta = Venta.objects.create(
                 dependienta=request.user,
                 fecha=timezone.now(),
-                forma_pago=venta_form.cleaned_data["forma_pago"],
-                codigo_transferencia=venta_form.cleaned_data["codigo_transferencia"],
-                total_a_pagar=precio_total  # ✅ se guarda el total a pagar
+                forma_pago=forma_pago,
+                codigo_transferencia=codigo_transferencia,
+                total_a_pagar=total_con_descuento
             )
 
+            # Crear los ítems y descontar del stock
             for item in items_actuales:
                 VentaItem.objects.create(
                     venta=venta,
@@ -356,12 +370,15 @@ def nueva_venta(request):
                 item.producto.cantidad -= item.cantidad
                 item.producto.save()
 
+            # Eliminar el carrito temporal
             venta_temp.delete()
+
             messages.success(request, "✅ Venta registrada correctamente.")
             return redirect("nueva_venta")
     else:
         venta_form = VentaForm()
 
+    # Paginación de productos
     productos_disponibles = Producto.objects.filter(disponibilidad=True)
     paginator = Paginator(productos_disponibles, 3)
     page_number = request.GET.get("page")
@@ -375,6 +392,57 @@ def nueva_venta(request):
         "venta_form": venta_form
     }
     return render(request, "nueva_venta.html", context)
+
+
+
+# # Vista para mostrar y confirmar una nueva venta
+# @login_required
+# @solo_superusuario
+# def nueva_venta(request):
+#     venta_temp, _ = VentaTemporal.objects.get_or_create(dependienta=request.user)
+#     items_actuales = venta_temp.items.select_related("producto")
+#     precio_total = sum(item.producto.precio * item.cantidad for item in items_actuales)
+
+#     if request.method == "POST":
+#         venta_form = VentaForm(request.POST)
+#         if venta_form.is_valid():
+#             # ✅ Crear la venta con el total calculado
+#             venta = Venta.objects.create(
+#                 dependienta=request.user,
+#                 fecha=timezone.now(),
+#                 forma_pago=venta_form.cleaned_data["forma_pago"],
+#                 codigo_transferencia=venta_form.cleaned_data["codigo_transferencia"],
+#                 total_a_pagar=precio_total  # ✅ se guarda el total a pagar
+#             )
+
+#             for item in items_actuales:
+#                 VentaItem.objects.create(
+#                     venta=venta,
+#                     producto=item.producto,
+#                     cantidad=item.cantidad
+#                 )
+#                 item.producto.cantidad -= item.cantidad
+#                 item.producto.save()
+
+#             venta_temp.delete()
+#             messages.success(request, "✅ Venta registrada correctamente.")
+#             return redirect("nueva_venta")
+#     else:
+#         venta_form = VentaForm()
+
+#     productos_disponibles = Producto.objects.filter(disponibilidad=True)
+#     paginator = Paginator(productos_disponibles, 3)
+#     page_number = request.GET.get("page")
+#     page_obj = paginator.get_page(page_number)
+
+#     context = {
+#         "usuario": request.user,
+#         "productos": page_obj,
+#         "items": items_actuales,
+#         "precio_total": precio_total,
+#         "venta_form": venta_form
+#     }
+#     return render(request, "nueva_venta.html", context)
 
 # Vista para agregar un producto (evita doble procesamiento)
 @login_required
@@ -432,7 +500,7 @@ def disminuir_cantidad_venta(request, item_id):
 
 # Vista para cancelar la venta
 @login_required
-@solo_superusuario
+
 def cancelar_venta(request):
     if request.method == "POST":
         try:
