@@ -7,7 +7,8 @@ from django.core.validators import MinValueValidator
 class Categoria(models.Model):
     nombre = models.CharField(max_length=200, unique=True)
     slug = models.SlugField(max_length=200, unique=True)
-    imagen = models.ImageField(upload_to="categorias/", blank=True, null=True)  # Guardará imágenes en /media/categorias/
+    imagen_url = models.URLField(blank=True, null=True, help_text="Pega aquí el enlace directo de la imagen en Drive")
+    
 
     class Meta:
         ordering = ['nombre']

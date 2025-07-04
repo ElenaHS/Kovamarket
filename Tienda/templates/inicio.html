@@ -125,7 +125,10 @@
             {% for categoria in categorias %}
                 <div class="col d-flex justify-content-center">
                     <a href="{% url 'producto_por_categoria' categoria_slug=categoria.slug %}" class="categoria-enlace text-center">
-                        <img src="{{ categoria.imagen.url }}" alt="{{ categoria.nombre }}" class="img-fluid rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+                        <img src="{{ categoria.imagen_url }}" alt="{{ categoria.nombre }}" class="img-fluid rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+
+
+
                         <p class="categoria-nombre">{{ categoria.nombre }}</p>
                     </a>
                 </div>

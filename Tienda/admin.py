@@ -1,15 +1,24 @@
 from django.contrib import admin
 from .models import Categoria, Producto, Marca, Pregunta, Carrito, CarritoItem, Venta, VentaItem, Entrada 
+from django.utils.html import format_html
+
 
 
 # Admin de Categoría
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'slug', 'imagen']
+    list_display = ['nombre', 'slug', 'imagen_preview']
     prepopulated_fields = {'slug': ('nombre',)}
     search_fields = ['nombre']
     ordering = ['nombre']
 
+    def imagen_preview(self, obj):
+        if obj.imagen_url:
+            return format_html('<img src="{}" style="width: 50px; height:50px; object-fit: cover;" />', obj.imagen_url)
+        return "(sin imagen)"
+    imagen_preview.short_description = 'Imagen'
+    
+    
 
 # Admin de Marca
 @admin.register(Marca)
