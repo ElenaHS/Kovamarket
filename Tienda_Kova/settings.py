@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = 'RENDER' not in os.environ
 
 if not DEBUG:
-    SECRET_KEY = os.environ.get(SECRET_KEY, default = "Esta es una contraseña") 
+    SECRET_KEY = os.environ.get('SECRET_KEY', default = "Esta es una contraseña") 
 else: 
     SECRET_KEY = 'django-insecure-74dsnu8gbvktch_^ep2rq78saecp^l8+ag3+po40!3dh)yrn(m'
 
