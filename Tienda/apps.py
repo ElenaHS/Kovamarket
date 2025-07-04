@@ -17,20 +17,9 @@ class TiendaConfig(AppConfig):
             except (OperationalError, ProgrammingError):
                 # ⚠️ Se atrapan errores si la base de datos aún no está lista
                 pass
-<<<<<<< HEAD
 
             # Importa señales solo si es seguro
             try:
                 import Tienda.signals
             except ImportError:
                 pass
-
-=======
-
-            # Importa señales solo si es seguro
-            try:
-                import Tienda.signals
-            except ImportError:
-                pass
->>>>>>> 77a41cf44a5a04bf9de21528f2e6642f7c2755bd
-
