@@ -116,11 +116,8 @@
             {% for producto in resultados %}
                 <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
                     <div class="card fixed-card">
-                        {% if producto.imagen %}
-                            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="card-img-top fixed-img">
-                        {% else %}
-                            <img src="/media/default.png" alt="Imagen no disponible" class="card-img-top fixed-img">
-                        {% endif %}
+                        <img src="{{ producto.imagen_url_final }}" alt="{{ producto.nombre }}" class="card-img-top fixed-img">
+
                         <div class="card-body p-2">
                             <h6 class="mb-1">{{ producto.nombre }}</h6>
                             <p class="card-text mb-0 font-weight-bold text-dark">${{ producto.precio }} CUP</p>

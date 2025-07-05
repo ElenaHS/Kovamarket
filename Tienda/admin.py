@@ -33,9 +33,10 @@ class MarcaAdmin(admin.ModelAdmin):
 class ProductoAdmin(admin.ModelAdmin):
     # Campos que se mostrarán en la lista de productos en el admin
     list_display = [
-        'nombre', 'slug', 'codigo', 'fecha_vencimiento',  # se añadió fecha_vencimiento
+        'nombre', 'slug', 'codigo', 'fecha_vencimiento',
         'categoria', 'marca', 'precio', 'cantidad',
-        'disponibilidad', 'peso', 'venta_de_garaje', 'fecha_creado'  # <-- se añadió venta_de_garaje
+        'disponibilidad', 'peso', 'venta_de_garaje', 'fecha_creado',
+        'imagen_preview'  # Añadido para mostrar la miniatura
     ]
 
     # Filtros en la barra lateral
@@ -54,7 +55,7 @@ class ProductoAdmin(admin.ModelAdmin):
     ordering = ['nombre']
 
     # Campos que se pueden editar directamente en la vista de lista
-    list_editable = ['precio', 'cantidad', 'disponibilidad', 'peso', 'venta_de_garaje']  # <-- añadido aquí también
+    list_editable = ['precio', 'cantidad', 'disponibilidad', 'peso', 'venta_de_garaje']
 
     # Autocompletado para campos ForeignKey
     autocomplete_fields = ['categoria', 'marca']
@@ -62,7 +63,15 @@ class ProductoAdmin(admin.ModelAdmin):
     # Botones de guardar al principio del formulario
     save_on_top = True
 
-
+    # Método para mostrar la miniatura de la imagen desde imagen_url
+    def imagen_preview(self, obj):
+        if obj.imagen_url:
+            return format_html('<img src="{}" style="width: 60px; height: 60px; object-fit: cover;" />', obj.imagen_url)
+        return "(No Image)"
+    imagen_preview.short_description = 'Imagen'
+    
+    
+    
 
 # Admin de Entrada de productos (reabastecimiento)
 @admin.register(Entrada)

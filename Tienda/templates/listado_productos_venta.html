@@ -33,7 +33,9 @@
                 {% for producto in productos %}
                 <tr>
                     <td>
-                        <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                        <img src="{{ producto.imagen_url_final }}" alt="{{ producto.nombre }}" class="card-img-top fixed-img" style="width: 80px; height: 80px; object-fit: cover;">
+
+                        
                     </td>
                     <td>{{ producto.nombre }}</td>
                     <td>{{ producto.cantidad }}</td>

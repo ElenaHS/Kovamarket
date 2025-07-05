@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator
 class Categoria(models.Model):
     nombre = models.CharField(max_length=200, unique=True)
     slug = models.SlugField(max_length=200, unique=True)
-    imagen_url = models.URLField(blank=True, null=True, help_text="Pega aquí el enlace directo de la imagen en Drive")
+    imagen_url = models.URLField(blank=True, null=True, help_text="Pega aquí el enlace directo de la imagen")
     
 
     class Meta:
@@ -40,7 +40,7 @@ class Producto(models.Model):
     marca = models.ForeignKey(Marca, related_name='productos', on_delete=models.SET_NULL, null=True, blank=True)
     nombre = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True)
-    imagen = models.ImageField(upload_to='productos/', blank=True, null=True)
+    imagen_url = models.URLField(blank=True, null=True, help_text="Pega aquí el enlace directo de la imagen")
     descripcion = models.TextField(blank=True)
 
     # Precio de venta actual del producto (inicialmente 0)
@@ -79,15 +79,16 @@ class Producto(models.Model):
         return f"/producto/{self.slug}/"
 
     @property
-    def imagen_url(self):
-        if self.imagen:
-            return self.imagen.url
+    def imagen_url_final(self):
+        if self.imagen_url:
+            return self.imagen_url
         return "/media/default.png"
 
     def save(self, *args, **kwargs):
         # Actualizar disponibilidad según la cantidad
         self.disponibilidad = self.cantidad > 0
         super().save(*args, **kwargs)
+
 
         
         
