@@ -210,7 +210,7 @@ def aumentar_cantidad(request, item_id):
     item = get_object_or_404(CarritoItem, id=item_id, carrito__usuario=request.user)
     if item.cantidad < item.producto.cantidad:
         item.cantidad += 1
-        item.producto.cantidad -= 1
+        
         item.producto.save()
         item.save()
     else:
@@ -224,12 +224,12 @@ def disminuir_cantidad(request, item_id):
     item = get_object_or_404(CarritoItem, id=item_id, carrito__usuario=request.user)
     if item.cantidad > 1:
         item.cantidad -= 1
-        item.producto.cantidad += 1
+        
         item.producto.save()
         item.save()
     else:
         # Eliminar el ítem si la cantidad es 1 y se desea disminuir
-        item.producto.cantidad += 1
+       
         item.producto.save()
         item.delete()
     return redirect('ver_carrito')
