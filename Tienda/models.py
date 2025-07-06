@@ -45,6 +45,9 @@ class Producto(models.Model):
 
     # Precio de venta actual del producto (inicialmente 0)
     precio = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    # Precio de venta actual en efectivo del producto (inicialmente 0)
+    precio_efectivo = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     # Código y vencimiento pueden estar vacíos
     codigo = models.CharField(max_length=100, blank=True, null=True)
@@ -97,9 +100,10 @@ class Entrada(models.Model):
     producto = models.ForeignKey(Producto, related_name='entradas', on_delete=models.CASCADE)
     precio_costo = models.DecimalField(max_digits=10, decimal_places=2)
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_venta_efectivo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     nueva_cantidad = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     nuevo_codigo = models.CharField(max_length=100)
-    nueva_fecha_vencimiento = models.DateField(blank=True, null=True)  # <--- Campo añadido
+    nueva_fecha_vencimiento = models.DateField(blank=True, null=True)
     fecha_entrada = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -107,15 +111,16 @@ class Entrada(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Al guardar una entrada, actualizamos automáticamente el producto asociado:
-        - Se suma la nueva cantidad a la cantidad existente.
-        - Se actualiza el precio de venta, el código y la fecha de vencimiento.
+        Al guardar una entrada, se actualiza el producto asociado:
+        - Se suma la nueva cantidad.
+        - Se actualizan precio normal, precio efectivo, código y fecha de vencimiento.
         """
         super().save(*args, **kwargs)
 
         producto = self.producto
         producto.cantidad += self.nueva_cantidad
         producto.precio = self.precio_venta
+        producto.precio_efectivo = self.precio_venta_efectivo  # 🆕 Se actualiza el nuevo campo
         producto.codigo = self.nuevo_codigo
 
         if self.nueva_fecha_vencimiento:
@@ -193,8 +198,14 @@ class VentaItem(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.PositiveIntegerField(default=1)
 
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Precio normal
+    precio_unitario_efectivo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Precio en efectivo
+
     def subtotal(self):
-        return self.cantidad * self.producto.precio
+        return self.precio_unitario * self.cantidad
+
+    def subtotal_efectivo(self):
+        return self.precio_unitario_efectivo * self.cantidad
 
     def __str__(self):
         return f'{self.cantidad} x {self.producto.nombre}'

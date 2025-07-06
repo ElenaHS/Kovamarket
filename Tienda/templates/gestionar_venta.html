@@ -81,6 +81,32 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Paginación -->
+    <div class="d-flex justify-content-center p-3">
+        <nav>
+            <ul class="pagination">
+                {% if ventas.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ ventas.previous_page_number }}">&laquo;</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+
+                {% for num in ventas.paginator.page_range %}
+                    <li class="page-item {% if ventas.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endfor %}
+
+                {% if ventas.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ ventas.next_page_number }}">&raquo;</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+
     {% else %}
     <div class="card shadow-sm">
         <div class="card-body">

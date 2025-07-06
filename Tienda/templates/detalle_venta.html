@@ -36,7 +36,7 @@
                 <thead class="table-light text-secondary text-uppercase">
                     <tr>
                         <th>Producto</th>
-                        <th>Precio</th>
+                        <th>Precio unitario</th>
                         <th>Cantidad</th>
                         <th>Subtotal</th>
                     </tr>
@@ -45,9 +45,21 @@
                     {% for item in items %}
                     <tr>
                         <td>{{ item.producto.nombre }}</td>
-                        <td>${{ item.producto.precio }}</td>
+                        <td>
+                            {% if venta.forma_pago == 'efectivo' %}
+                                ${{ item.precio_unitario_efectivo|floatformat:2 }}
+                            {% else %}
+                                ${{ item.precio_unitario|floatformat:2 }}
+                            {% endif %}
+                        </td>
                         <td>{{ item.cantidad }}</td>
-                        <td>${{ item.subtotal|floatformat:2 }}</td>
+                        <td>
+                            {% if venta.forma_pago == 'efectivo' %}
+                                ${{ item.subtotal_efectivo|floatformat:2 }}
+                            {% else %}
+                                ${{ item.subtotal|floatformat:2 }}
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

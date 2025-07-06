@@ -15,6 +15,14 @@
         </div>
     {% endif %}
 
+    <!-- Buscador -->
+    <form method="get" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="buscar" class="form-control" placeholder="Buscar producto por nombre..." value="{{ buscar }}">
+            <button type="submit" class="btn btn-outline-secondary">Buscar</button>
+        </div>
+    </form>
+
     <!-- Tabla de productos -->
     <div class="table-responsive mb-4">
         <table class="table table-hover align-middle text-center shadow-sm rounded overflow-hidden">
@@ -24,6 +32,7 @@
                     <th>Nombre</th>
                     <th>Stock</th>
                     <th>Precio</th>
+                    <th>Precio efectivo</th>
                     <th>Agregar</th>
                 </tr>
             </thead>
@@ -36,6 +45,7 @@
                     <td>{{ producto.nombre }}</td>
                     <td>{{ producto.cantidad }}</td>
                     <td class="fw-bold text-kova">${{ producto.precio }}</td>
+                    <td class="fw-bold text-danger">${{ producto.precio_efectivo }} <small>(efectivo)</small></td>
                     <td>
                         <form method="post" action="{% url 'agregar_producto_venta' producto.id %}" onsubmit="this.querySelector('button').disabled = true;">
                             {% csrf_token %}
@@ -45,7 +55,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-muted">No hay productos disponibles.</td>
+                    <td colspan="6" class="text-muted">No hay productos disponibles.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -57,25 +67,32 @@
         <nav>
             <ul class="pagination">
                 {% if productos.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?page={{ productos.previous_page_number }}">&laquo;</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="?buscar={{ buscar }}&page={{ productos.previous_page_number }}">&laquo;</a>
+                    </li>
                 {% else %}
                     <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
                 {% endif %}
 
                 {% for num in productos.paginator.page_range %}
                     <li class="page-item {% if productos.number == num %}active{% endif %}">
-                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        <a class="page-link" href="?buscar={{ buscar }}&page={{ num }}">{{ num }}</a>
                     </li>
                 {% endfor %}
 
                 {% if productos.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ productos.next_page_number }}">&raquo;</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="?buscar={{ buscar }}&page={{ productos.next_page_number }}">&raquo;</a>
+                    </li>
                 {% else %}
                     <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
                 {% endif %}
             </ul>
         </nav>
     </div>
+
+    <!-- Resto de la plantilla igual... -->
+
 
     <!-- Productos añadidos -->
     <h5 class="text-kova mb-3">Productos añadidos</h5>
@@ -88,6 +105,7 @@
                 <div class="card-body ms-3 p-2">
                     <h6 class="card-title mb-1">{{ item.producto.nombre }}</h6>
                     <p class="mb-1 text-muted">Precio: ${{ item.producto.precio }}</p>
+                    <p class="mb-1 text-danger">Precio efectivo: ${{ item.producto.precio_efectivo }} <small>(efectivo)</small></p>
                     <div class="d-flex align-items-center mb-2">
                         <form action="{% url 'disminuir_cantidad_venta' item.id %}" method="post" class="me-2" onsubmit="this.querySelector('button').disabled = true;">
                             {% csrf_token %}
@@ -101,7 +119,8 @@
                             <button class="btn btn-outline-secondary btn-sm" {% if item.cantidad >= item.producto.cantidad %}disabled{% endif %}>+</button>
                         </form>
                     </div>
-                    <p class="fw-bold text-kova small">Subtotal: ${{ item.subtotal|floatformat:2 }}</p>
+                    <p class="fw-bold text-kova small mb-1">Subtotal (transferencia): ${{ item.subtotal|floatformat:2 }}</p>
+                    <p class="fw-bold text-danger small mb-0">Subtotal (efectivo): ${{ item.subtotal_efectivo|floatformat:2 }}</p>
                 </div>
             </div>
         </div>
@@ -114,7 +133,7 @@
     <!-- Total -->
     <div class="text-end mt-3 mb-4">
         <h4>Total: <span class="text-muted">${{ precio_total|floatformat:2 }}</span></h4>
-        <h4 id="total-con-descuento" class="text-kova fw-bold"></h4>
+        <h4 class="text-danger">Total en efectivo: <span class="text-danger">${{ precio_total_efectivo|floatformat:2 }}</span></h4>
     </div>
 
     <!-- Formulario para Confirmar Venta -->
@@ -152,8 +171,6 @@
     document.addEventListener("DOMContentLoaded", function () {
         const formaPagoSelect = document.getElementById("id_forma_pago");
         const codigoTransferenciaInput = document.getElementById("id_codigo_transferencia");
-        const totalConDescuento = document.getElementById("total-con-descuento");
-        const totalSinDescuento = parseFloat("{{ precio_total|floatformat:2 }}");
 
         function toggleCodigoTransferencia() {
             const valor = formaPagoSelect.value;
@@ -167,23 +184,10 @@
             }
         }
 
-        function actualizarTotal() {
-            const valor = formaPagoSelect.value.toLowerCase();
-            if (valor === "efectivo") {
-                const descuento = totalSinDescuento * 0.05;
-                const totalFinal = (totalSinDescuento - descuento).toFixed(2);
-                totalConDescuento.innerHTML = `Total con 5% de descuento: $${totalFinal}`;
-            } else {
-                totalConDescuento.innerHTML = "";
-            }
-        }
-
         toggleCodigoTransferencia();
-        actualizarTotal();
 
         formaPagoSelect.addEventListener("change", function () {
             toggleCodigoTransferencia();
-            actualizarTotal();
         });
     });
 </script>

@@ -28,19 +28,22 @@ class MarcaAdmin(admin.ModelAdmin):
     ordering = ['nombre']
 
 
-# Admin de Producto
+# Este es el admin de Producto
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    # Campos que se mostrarán en la lista de productos en el admin
+    # Campos que se mostrarán en la lista de productos en el panel de administración
     list_display = [
         'nombre', 'slug', 'codigo', 'fecha_vencimiento',
-        'categoria', 'marca', 'precio', 'cantidad',
-        'disponibilidad', 'peso', 'venta_de_garaje', 'fecha_creado',
-        'imagen_preview'  # Añadido para mostrar la miniatura
+        'categoria', 'marca', 'precio', 'precio_efectivo',  # Se agregó precio_efectivo
+        'cantidad', 'disponibilidad', 'peso',
+        'venta_de_garaje', 'fecha_creado', 'imagen_preview'
     ]
 
-    # Filtros en la barra lateral
-    list_filter = ['disponibilidad', 'categoria', 'marca', 'fecha_creado', 'fecha_vencimiento', 'venta_de_garaje']
+    # Filtros en la barra lateral del admin
+    list_filter = [
+        'disponibilidad', 'categoria', 'marca',
+        'fecha_creado', 'fecha_vencimiento', 'venta_de_garaje'
+    ]
 
     # Campos sobre los que se puede buscar
     search_fields = ['nombre', 'descripcion', 'codigo', 'marca__nombre']
@@ -54,21 +57,25 @@ class ProductoAdmin(admin.ModelAdmin):
     # Orden predeterminado de los resultados
     ordering = ['nombre']
 
-    # Campos que se pueden editar directamente en la vista de lista
-    list_editable = ['precio', 'cantidad', 'disponibilidad', 'peso', 'venta_de_garaje']
+    # Campos que se pueden editar directamente desde la lista
+    list_editable = ['precio', 'precio_efectivo', 'cantidad', 'disponibilidad', 'peso', 'venta_de_garaje']
 
-    # Autocompletado para campos ForeignKey
+    # Campos de relaciones con autocompletado
     autocomplete_fields = ['categoria', 'marca']
 
-    # Botones de guardar al principio del formulario
+    # Mostrar botones de guardar también en la parte superior del formulario
     save_on_top = True
 
-    # Método para mostrar la miniatura de la imagen desde imagen_url
+    # Método para mostrar una miniatura de la imagen en la vista de lista
     def imagen_preview(self, obj):
         if obj.imagen_url:
-            return format_html('<img src="{}" style="width: 60px; height: 60px; object-fit: cover;" />', obj.imagen_url)
+            return format_html(
+                '<img src="{}" style="width: 60px; height: 60px; object-fit: cover;" />',
+                obj.imagen_url
+            )
         return "(No Image)"
     imagen_preview.short_description = 'Imagen'
+
     
     
     
@@ -77,8 +84,14 @@ class ProductoAdmin(admin.ModelAdmin):
 @admin.register(Entrada)
 class EntradaAdmin(admin.ModelAdmin):
     list_display = [
-        'producto', 'nuevo_codigo', 'nueva_fecha_vencimiento',  # se añadió nueva_fecha_vencimiento
-        'precio_costo', 'precio_venta', 'nueva_cantidad', 'fecha_entrada'
+        'producto',
+        'nuevo_codigo',
+        'nueva_fecha_vencimiento',  # Fecha de vencimiento
+        'precio_costo',
+        'precio_venta',
+        'precio_venta_efectivo',     # ✅ Campo nuevo añadido
+        'nueva_cantidad',
+        'fecha_entrada'
     ]
     list_filter = ['producto', 'fecha_entrada', 'nueva_fecha_vencimiento']
     search_fields = ['producto__nombre', 'nuevo_codigo']
@@ -86,6 +99,7 @@ class EntradaAdmin(admin.ModelAdmin):
     date_hierarchy = 'fecha_entrada'
     ordering = ['-fecha_entrada']
     save_on_top = True
+
 
 
 
