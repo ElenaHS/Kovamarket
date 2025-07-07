@@ -25,7 +25,7 @@
 
     <!-- Tabla de productos -->
     <div class="table-responsive mb-4">
-        <table class="table table-hover align-middle text-center shadow-sm rounded overflow-hidden">
+        <table class="table table-hover align-middle text-center shadow-sm rounded overflow-hidden tabla-productos-pequena">
             <thead class="table-light text-uppercase text-secondary">
                 <tr>
                     <th>Imagen</th>
@@ -40,7 +40,7 @@
                 {% for producto in productos %}
                 <tr>
                     <td>
-                        <img src="{{ producto.imagen_url_final }}" alt="{{ producto.nombre }}" class="card-img-top fixed-img" style="width: 80px; height: 80px; object-fit: cover;">
+                        <img src="{{ producto.imagen_url_final }}" alt="{{ producto.nombre }}" style="width: 40px; height: 40px; object-fit: cover;">
                     </td>
                     <td>{{ producto.nombre }}</td>
                     <td>{{ producto.cantidad }}</td>
@@ -91,36 +91,33 @@
         </nav>
     </div>
 
-    <!-- Resto de la plantilla igual... -->
-
-
     <!-- Productos añadidos -->
     <h5 class="text-kova mb-3">Productos añadidos</h5>
     {% if items %}
     <div class="row">
         {% for item in items %}
-        <div class="col-md-6 mb-3">
-            <div class="card h-100 flex-row align-items-center shadow-sm p-2 border-light">
-                <img src="{{ item.producto.imagen_url }}" alt="{{ item.producto.nombre }}" class="rounded" style="width: 90px; height: 90px; object-fit: cover;">
-                <div class="card-body ms-3 p-2">
-                    <h6 class="card-title mb-1">{{ item.producto.nombre }}</h6>
-                    <p class="mb-1 text-muted">Precio: ${{ item.producto.precio }}</p>
-                    <p class="mb-1 text-danger">Precio efectivo: ${{ item.producto.precio_efectivo }} <small>(efectivo)</small></p>
-                    <div class="d-flex align-items-center mb-2">
-                        <form action="{% url 'disminuir_cantidad_venta' item.id %}" method="post" class="me-2" onsubmit="this.querySelector('button').disabled = true;">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card h-100 flex-row align-items-center shadow-sm p-1 border-light tarjeta-producto-pequena">
+                <img src="{{ item.producto.imagen_url }}" alt="{{ item.producto.nombre }}" class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
+                <div class="card-body ms-2 p-1">
+                    <h6 class="card-title mb-0" style="font-size: 0.85rem;">{{ item.producto.nombre }}</h6>
+                    <p class="mb-0 text-muted" style="font-size: 0.75rem;">Precio: ${{ item.producto.precio }}</p>
+                    <p class="mb-1 text-danger" style="font-size: 0.75rem;">Precio efectivo: ${{ item.producto.precio_efectivo }} <small>(efectivo)</small></p>
+                    <div class="d-flex align-items-center mb-1" style="gap: 6px;">
+                        <form action="{% url 'disminuir_cantidad_venta' item.id %}" method="post" onsubmit="this.querySelector('button').disabled = true;">
                             {% csrf_token %}
-                            <button class="btn btn-outline-secondary btn-sm">−</button>
+                            <button class="btn btn-outline-secondary btn-sm" style="padding: 0 8px; font-size: 0.75rem;">−</button>
                         </form>
 
-                        <span class="fw-bold">{{ item.cantidad }}</span>
+                        <span class="fw-bold" style="font-size: 0.85rem;">{{ item.cantidad }}</span>
 
-                        <form action="{% url 'aumentar_cantidad_venta' item.id %}" method="post" class="ms-2" onsubmit="this.querySelector('button').disabled = true;">
+                        <form action="{% url 'aumentar_cantidad_venta' item.id %}" method="post" onsubmit="this.querySelector('button').disabled = true;">
                             {% csrf_token %}
-                            <button class="btn btn-outline-secondary btn-sm" {% if item.cantidad >= item.producto.cantidad %}disabled{% endif %}>+</button>
+                            <button class="btn btn-outline-secondary btn-sm" style="padding: 0 8px; font-size: 0.75rem;" {% if item.cantidad >= item.producto.cantidad %}disabled{% endif %}>+</button>
                         </form>
                     </div>
-                    <p class="fw-bold text-kova small mb-1">Subtotal (transferencia): ${{ item.subtotal|floatformat:2 }}</p>
-                    <p class="fw-bold text-danger small mb-0">Subtotal (efectivo): ${{ item.subtotal_efectivo|floatformat:2 }}</p>
+                    <p class="fw-bold text-kova small mb-0" style="font-size: 0.75rem;">Subtotal (transferencia): ${{ item.subtotal|floatformat:2 }}</p>
+                    <p class="fw-bold text-danger small mb-0" style="font-size: 0.75rem;">Subtotal (efectivo): ${{ item.subtotal_efectivo|floatformat:2 }}</p>
                 </div>
             </div>
         </div>
@@ -210,6 +207,39 @@
     }
     .table th, .table td {
         vertical-align: middle;
+    }
+    /* Estilo para la tabla con letra un poco más grande pero imagen pequeña */
+    .tabla-productos-pequena {
+        font-size: 14px !important;
+    }
+    .tabla-productos-pequena th,
+    .tabla-productos-pequena td {
+        padding: 6px 8px !important;
+    }
+    .tabla-productos-pequena img {
+        width: 40px !important;
+        height: 40px !important;
+        object-fit: cover !important;
+    }
+    /* Nuevos estilos para tarjetas más pequeñas */
+    .tarjeta-producto-pequena {
+        max-width: 350px;
+        padding: 6px !important;
+    }
+    .tarjeta-producto-pequena .card-body {
+        padding: 4px !important;
+    }
+    .tarjeta-producto-pequena h6.card-title {
+        font-size: 0.85rem;
+        margin-bottom: 0.2rem;
+    }
+    .tarjeta-producto-pequena p {
+        font-size: 0.75rem;
+        margin-bottom: 0.2rem;
+    }
+    .tarjeta-producto-pequena .btn-outline-secondary.btn-sm {
+        padding: 0 8px;
+        font-size: 0.75rem;
     }
 </style>
 {% endblock %}

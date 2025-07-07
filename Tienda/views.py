@@ -17,6 +17,7 @@ from xhtml2pdf import pisa
 from django.http import HttpResponse
 from django.template.loader import get_template
 from decimal import Decimal
+from datetime import datetime
 
 
 
@@ -277,7 +278,7 @@ solo_superusuario
 @login_required
 def gestionar_venta(request):
     ventas_lista = Venta.objects.filter(dependienta=request.user).order_by('-fecha')
-    paginator = Paginator(ventas_lista, 5)  # Cambia el 5 si deseas más o menos ventas por página
+    paginator = Paginator(ventas_lista, 20)  # Cambia el 20 si deseas más o menos ventas por página
     page_number = request.GET.get("page")
     ventas = paginator.get_page(page_number)
     return render(request, 'gestionar_venta.html', {'ventas': ventas})
@@ -312,12 +313,34 @@ def generar_reporte_pdf(request):
     filtro = request.GET.get('filtro')
     valor = request.GET.get('valor')
 
-    # Aquí filtras tus ventas según filtro y valor (implementa esta función)
+    # Filtrar ventas según el filtro y valor
     ventas_filtradas = filtrar_ventas_por_filtro(filtro, valor)
 
-    template_path = 'reporte_pdf.html'
-    context = {'ventas': ventas_filtradas}
+    # Calcular totales según forma de pago
+    total_efectivo = 0
+    total_transferencia = 0
+    for venta in ventas_filtradas:
+        if venta.forma_pago == 'efectivo':
+            total_efectivo += float(venta.total_a_pagar)
+        elif venta.forma_pago == 'transferencia':
+            total_transferencia += float(venta.total_a_pagar)
 
+    total_general = total_efectivo + total_transferencia
+
+    # Contexto para la plantilla
+    context = {
+        'ventas': ventas_filtradas,
+        'filtro': filtro,
+        'valor': valor,
+        'total_efectivo': total_efectivo,
+        'total_transferencia': total_transferencia,
+        'total_general': total_general,
+        'ahora': timezone.now(),
+        'request': request,  # para acceder a request.user en la plantilla
+    }
+
+    # Renderizar PDF
+    template_path = 'reporte_pdf.html'
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="reporte_ventas.pdf"'
 
@@ -331,11 +354,27 @@ def generar_reporte_pdf(request):
 
     return response
 
-def filtrar_ventas_por_filtro(filtro, valor):
-    # Aquí pones la lógica para filtrar según día, semana, mes o año
-    # Retorna queryset con las ventas filtradas
-    pass
 
+def filtrar_ventas_por_filtro(filtro, valor):
+    if not filtro or not valor:
+        return Venta.objects.none()  # No se proporciona filtro o valor
+
+    try:
+        if filtro == 'dia':
+            fecha = datetime.strptime(valor, '%Y-%m-%d')
+            return Venta.objects.filter(fecha__date=fecha.date())
+
+        elif filtro == 'mes':
+            año, mes = map(int, valor.split('-'))
+            return Venta.objects.filter(fecha__year=año, fecha__month=mes)
+
+        elif filtro == 'año':
+            año = int(valor)
+            return Venta.objects.filter(fecha__year=año)
+
+    except Exception as e:
+        print(f"Error en filtrado: {e}")
+        return Venta.objects.none()
 
 
 # Vista para mostrar y confirmar una nueva venta
@@ -366,7 +405,7 @@ def nueva_venta(request):
         productos_disponibles = productos_disponibles.filter(nombre__icontains=consulta)
 
     # Paginación
-    paginator = Paginator(productos_disponibles, 3)
+    paginator = Paginator(productos_disponibles, 20)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 

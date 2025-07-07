@@ -1,39 +1,171 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <title>Reporte de Ventas</title>
+    <title>Reporte de Ventas Kova</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
-        th { background-color: #f0f0f0; }
-        h2 { text-align: center; }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            margin: 30px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fc7319;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .info {
+            margin-bottom: 20px;
+        }
+
+        .info p {
+            margin: 4px 0;
+        }
+
+        .venta {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+
+        .venta h3 {
+            color: #444;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 5px 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .total-venta {
+            text-align: right;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .resumen-final {
+            margin-top: 40px;
+            padding: 10px;
+            border-top: 2px solid #444;
+        }
+
+        .resumen-final h4 {
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #fc7319;
+        }
+
+        .resumen-final p {
+            margin: 2px 0;
+        }
     </style>
 </head>
 <body>
-    <h2>Reporte de Ventas</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Forma de pago</th>
-                <th>Total</th>
-                <th>Código transferencia</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for venta in ventas %}
-            <tr>
-                <td>{{ venta.id }}</td>
-                <td>{{ venta.fecha|date:"Y-m-d H:i" }}</td>
-                <td>{{ venta.forma_pago }}</td>
-                <td>${{ venta.total_a_pagar|floatformat:2 }}</td>
-                <td>{{ venta.codigo_transferencia|default:"-" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <!-- Encabezado con imagen y título+fecha lado a lado -->
+<div style="display: flex; align-items: center; margin-bottom: 20px; position: relative;">
+
+    <img src="https://i.ibb.co/HLzVRXTX/logo-kovamarket.png" 
+         alt="Logo de Kovamarket" 
+         style="width: 60px; height: auto; margin-right: 15px;">
+
+    <div>
+        <h1 style="margin: 0; color: #fc7319; font-size: 20px; line-height: 1.1;">
+            Reporte de Ventas Kova
+        </h1>
+        <h1 style="margin: 0; font-size: 16px; font-weight: normal; color: #333;">
+            {% if filtro == 'dia' %} {{ valor }}
+            {% elif filtro == 'mes' %} {{ valor }}
+            {% elif filtro == 'año' %} {{ valor }}
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<!-- Información adicional debajo -->
+<div class="info" style="margin-top: 10px; font-size: 11px; color: #333;">
+    <p><strong>Dependiente:</strong> {{ request.user.username }}</p>
+    <p><strong>Fecha de generación:</strong> {{ ahora|date:"d/m/Y H:i" }}</p>
+    <p><strong>Filtrado por:</strong>
+        {% if filtro == 'dia' %} Día: {{ valor }}
+        {% elif filtro == 'mes' %} Mes: {{ valor }}
+        {% elif filtro == 'año' %} Año: {{ valor }}
+        {% endif %}
+    </p>
+</div>
+
+    {% for venta in ventas %}
+    <div class="venta">
+        <h3>Venta #{{ venta.id }} | {{ venta.fecha|date:"d/m/Y H:i" }}</h3>
+        <p><strong>Forma de pago:</strong> {{ venta.get_forma_pago_display }}</p>
+        {% if venta.forma_pago == "transferencia" %}
+        <p><strong>Código de transferencia:</strong> {{ venta.codigo_transferencia }}</p>
+        {% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio unitario</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in venta.items.all %}
+                <tr>
+                    <td>{{ item.producto.nombre }}</td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>
+                        {% if venta.forma_pago == "efectivo" %}
+                            ${{ item.precio_unitario_efectivo|floatformat:2 }}
+                        {% else %}
+                            ${{ item.precio_unitario|floatformat:2 }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if venta.forma_pago == "efectivo" %}
+                            ${{ item.subtotal_efectivo|floatformat:2 }}
+                        {% else %}
+                            ${{ item.subtotal|floatformat:2 }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p class="total-venta">Total de esta venta: ${{ venta.total_a_pagar|floatformat:2 }}</p>
+    </div>
+    {% empty %}
+        <p>No hay ventas con ese filtro.</p>
+    {% endfor %}
+
+    <!-- Resumen final -->
+    <div class="resumen-final">
+        <h4>Resumen General</h4>
+        <p>Total en efectivo: ${{ total_efectivo|floatformat:2 }}</p>
+        <p>Total en transferencia: ${{ total_transferencia|floatformat:2 }}</p>
+        <p><strong>Total general:</strong> ${{ total_general|floatformat:2 }}</p>
+    </div>
 </body>
 </html>

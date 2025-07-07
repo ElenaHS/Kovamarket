@@ -19,7 +19,6 @@
                 <select id="filtro" name="filtro" class="form-select" required onchange="mostrarCampoFiltro()">
                     <option value="" selected disabled>Selecciona uno</option>
                     <option value="dia">Día</option>
-                    <option value="semana">Semana</option>
                     <option value="mes">Mes</option>
                     <option value="año">Año</option>
                 </select>
@@ -132,11 +131,6 @@
                 <label for="valor" class="form-label text-secondary">Selecciona un día</label>
                 <input type="date" id="valor" name="valor" class="form-control" max="${hoy}" required>
             `;
-        } else if (filtro === 'semana') {
-            inputHtml = `
-                <label for="valor" class="form-label text-secondary">Selecciona una semana</label>
-                <input type="week" id="valor" name="valor" class="form-control" required>
-            `;
         } else if (filtro === 'mes') {
             inputHtml = `
                 <label for="valor" class="form-label text-secondary">Selecciona un mes</label>
@@ -177,3 +171,4 @@
     }
 </style>
 {% endblock %}
+
