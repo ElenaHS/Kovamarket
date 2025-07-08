@@ -150,6 +150,12 @@
             </div>
         </div>
 
+        <!-- Campo motivo (solo para gastos) -->
+        <div class="mb-3" id="campo-motivo" style="display: none;">
+            {{ venta_form.motivo_gasto.label_tag }}
+            {{ venta_form.motivo_gasto }}
+        </div>
+
         <div class="d-flex justify-content-center gap-2">
             <button type="submit" class="btn btn-kova">Confirmar venta</button>
         </div>
@@ -168,10 +174,13 @@
     document.addEventListener("DOMContentLoaded", function () {
         const formaPagoSelect = document.getElementById("id_forma_pago");
         const codigoTransferenciaInput = document.getElementById("id_codigo_transferencia");
+        const campoMotivo = document.getElementById("campo-motivo");
 
-        function toggleCodigoTransferencia() {
+        function actualizarVisibilidadCampos() {
             const valor = formaPagoSelect.value;
-            if (valor.toLowerCase() === "transferencia") {
+
+            // Transferencia: mostrar y requerir código
+            if (valor === "transferencia") {
                 codigoTransferenciaInput.disabled = false;
                 codigoTransferenciaInput.required = true;
             } else {
@@ -179,13 +188,20 @@
                 codigoTransferenciaInput.required = false;
                 codigoTransferenciaInput.value = "";
             }
+
+            // Gasto: mostrar y requerir motivo
+            if (valor === "gasto") {
+                campoMotivo.style.display = "block";
+                document.getElementById("id_motivo_gasto").required = true;
+            } else {
+                campoMotivo.style.display = "none";
+                document.getElementById("id_motivo_gasto").required = false;
+                document.getElementById("id_motivo_gasto").value = "";
+            }
         }
 
-        toggleCodigoTransferencia();
-
-        formaPagoSelect.addEventListener("change", function () {
-            toggleCodigoTransferencia();
-        });
+        actualizarVisibilidadCampos();
+        formaPagoSelect.addEventListener("change", actualizarVisibilidadCampos);
     });
 </script>
 

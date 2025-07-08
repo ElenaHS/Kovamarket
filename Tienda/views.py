@@ -84,18 +84,14 @@ def listar_categoria(request):
 def listar_producto(request, categoria_slug=None):
     # Verificar si el slug corresponde a una categoría específica
     if categoria_slug == 'venta-de-garaje':
-        # Si es una categoría fija, filtrar por productos marcados como venta_de_garaje
-        categoria = None  # No hay categoría real en este caso
-        productos = Producto.objects.filter(venta_de_garaje=True)
-    elif categoria_slug and categoria_slug != 'todo':
-        # Buscar la categoría según el slug proporcionado
-        categoria = get_object_or_404(Categoria, slug=categoria_slug)
-        # Filtrar productos por la categoría encontrada
-        productos = Producto.objects.filter(categoria=categoria)
-    else:
-        # Si el slug es "todo" o no se proporciona ninguno, mostrar todos los productos
         categoria = None
-        productos = Producto.objects.all()
+        productos = Producto.objects.filter(venta_de_garaje=True, deshabilitado=False)
+    elif categoria_slug and categoria_slug != 'todo':
+        categoria = get_object_or_404(Categoria, slug=categoria_slug)
+        productos = Producto.objects.filter(categoria=categoria, deshabilitado=False)
+    else:
+        categoria = None
+        productos = Producto.objects.filter(deshabilitado=False)
 
     # Actualizar la disponibilidad de cada producto según su stock
     for producto in productos:
@@ -106,27 +102,27 @@ def listar_producto(request, categoria_slug=None):
             producto.disponibilidad = True
             producto.save()
 
-    # Obtener el parámetro de ordenación desde la URL
+    # Ordenamiento opcional
     ordenar = request.GET.get('ordenar', None)
     if ordenar == 'precio_asc':
-        productos = productos.order_by('precio')  # Ordenar de menor a mayor precio
+        productos = productos.order_by('precio')
     elif ordenar == 'precio_desc':
-        productos = productos.order_by('-precio')  # Ordenar de mayor a menor precio
+        productos = productos.order_by('-precio')
     elif ordenar == 'nuevo':
-        productos = productos.order_by('-fecha_creado')  # Ordenar por productos más recientes
+        productos = productos.order_by('-fecha_creado')
 
-    # Configurar paginación (18 productos por página)
+    # Paginación
     paginator = Paginator(productos, 18)
-    page_number = request.GET.get('page')  # Obtener número de página desde la URL
-    productos_page = paginator.get_page(page_number)  # Obtener la página actual de productos
+    page_number = request.GET.get('page')
+    productos_page = paginator.get_page(page_number)
 
-    # Renderizar la plantilla y pasar el slug de categoría seleccionada
     return render(request, 'listar_productos.html', {
         'categoria': categoria,
-        'categoria_slug': categoria_slug,  # Se pasa a la plantilla para marcar categoría activa
+        'categoria_slug': categoria_slug,
         'productos': productos_page,
         'ordenar': ordenar
     })
+
 
 # Detalle de los productos
 def producto_detalle(request, id):
@@ -241,16 +237,19 @@ def disminuir_cantidad(request, item_id):
 def buscar_productos(request):
     # Obtener el término de búsqueda desde el campo "q" del formulario
     query = request.GET.get('q', '')
-    
-    # Filtrar productos cuyo nombre contenga el término buscado (ignorando mayúsculas/minúsculas)
-    resultados = Producto.objects.filter(nombre__icontains=query)
+
+    # Filtrar productos activos cuyo nombre contenga el término buscado
+    resultados = Producto.objects.filter(
+        nombre__icontains=query,
+        deshabilitado=False
+    )
 
     # Renderizar los resultados en la plantilla correspondiente
     return render(request, 'buscar_resultados.html', {
         'query': query,
         'resultados': resultados
     })
-    
+
     
     
 # Solo usuarios del grupo "dependienta"
@@ -305,8 +304,7 @@ def detalle_venta(request, venta_id):
         'items': items
     })
 
-
-# Vista para generar reporte en pdf de las ventas
+# Vista para exportar a pdf
 @solo_superusuario
 @login_required
 def generar_reporte_pdf(request):
@@ -319,13 +317,17 @@ def generar_reporte_pdf(request):
     # Calcular totales según forma de pago
     total_efectivo = 0
     total_transferencia = 0
+    total_gasto = 0
+
     for venta in ventas_filtradas:
         if venta.forma_pago == 'efectivo':
             total_efectivo += float(venta.total_a_pagar)
         elif venta.forma_pago == 'transferencia':
             total_transferencia += float(venta.total_a_pagar)
+        elif venta.forma_pago == 'gasto':
+            total_gasto += float(venta.total_a_pagar)
 
-    total_general = total_efectivo + total_transferencia
+    total_general = total_efectivo + total_transferencia + total_gasto
 
     # Contexto para la plantilla
     context = {
@@ -334,6 +336,7 @@ def generar_reporte_pdf(request):
         'valor': valor,
         'total_efectivo': total_efectivo,
         'total_transferencia': total_transferencia,
+        'total_gasto': total_gasto,
         'total_general': total_general,
         'ahora': timezone.now(),
         'request': request,  # para acceder a request.user en la plantilla
@@ -375,32 +378,29 @@ def filtrar_ventas_por_filtro(filtro, valor):
     except Exception as e:
         print(f"Error en filtrado: {e}")
         return Venta.objects.none()
+    
+    
+    
 
-
-# Vista para mostrar y confirmar una nueva venta
-from django.db.models import Q
-from django.core.paginator import Paginator
-
+# Vista para la nueva venta 
 @login_required
 @solo_superusuario
 def nueva_venta(request):
+    # Obtener o crear una venta temporal por usuario
     venta_temp, _ = VentaTemporal.objects.get_or_create(dependienta=request.user)
     items_actuales = venta_temp.items.select_related("producto")
 
-    # Precio sin descuento
+    # Total con precio normal y efectivo
     precio_total = sum(item.producto.precio * item.cantidad for item in items_actuales)
-
-    # Precio total en efectivo
     precio_total_efectivo = sum(item.producto.precio_efectivo * item.cantidad for item in items_actuales)
 
-    # Subtotal efectivo para cada item
+    # Subtotal por ítem en efectivo
     for item in items_actuales:
         item.subtotal_efectivo = item.producto.precio_efectivo * item.cantidad
 
-    # Búsqueda de productos
+    # Buscar productos
     consulta = request.GET.get('buscar', '')
-    productos_disponibles = Producto.objects.filter(disponibilidad=True)
-
+    productos_disponibles = Producto.objects.filter(disponibilidad=True, deshabilitado=False)
     if consulta:
         productos_disponibles = productos_disponibles.filter(nombre__icontains=consulta)
 
@@ -413,18 +413,26 @@ def nueva_venta(request):
         venta_form = VentaForm(request.POST)
         if venta_form.is_valid():
             forma_pago = venta_form.cleaned_data["forma_pago"]
-            codigo_transferencia = venta_form.cleaned_data["codigo_transferencia"]
+            codigo_transferencia = venta_form.cleaned_data.get("codigo_transferencia")
+            motivo_gasto = venta_form.cleaned_data.get("motivo_gasto")
 
-            total_a_pagar = precio_total_efectivo if forma_pago == "efectivo" else precio_total
+            # Total a pagar según forma de pago (gasto se trata como transferencia)
+            if forma_pago == "efectivo":
+                total_a_pagar = precio_total_efectivo
+            else:
+                total_a_pagar = precio_total  # incluye gasto y transferencia
 
+            # Crear la venta
             venta = Venta.objects.create(
                 dependienta=request.user,
                 fecha=timezone.now(),
                 forma_pago=forma_pago,
                 codigo_transferencia=codigo_transferencia,
-                total_a_pagar=total_a_pagar
+                total_a_pagar=total_a_pagar,
+                motivo_gasto=motivo_gasto if forma_pago == "gasto" else None
             )
 
+            # Crear los ítems y descontar del stock
             for item in items_actuales:
                 VentaItem.objects.create(
                     venta=venta,
@@ -436,6 +444,7 @@ def nueva_venta(request):
                 item.producto.cantidad -= item.cantidad
                 item.producto.save()
 
+            # Limpiar venta temporal
             venta_temp.delete()
             messages.success(request, "✅ Venta registrada correctamente.")
             return redirect("gestionar_venta")
@@ -452,7 +461,6 @@ def nueva_venta(request):
         "buscar": consulta
     }
     return render(request, "nueva_venta.html", context)
-
 
 
 
@@ -528,97 +536,60 @@ def cancelar_venta(request):
 
 
 
-
-# # Esta es la vista para registrar una nueva venta basada en el carrito de la dependienta
+# # Vista para registrar un nuevo gasto
 # @login_required
-# def nueva_venta(request):
-#     # Obtener el carrito de la usuaria actual
-#     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
-#     items = carrito.items.select_related('producto')
+# def nuevo_gasto(request):
+#     # Filtrar productos disponibles y no deshabilitados
+#     productos_disponibles = Producto.objects.filter(disponibilidad=True, deshabilitado=False)
 
-#     if not items.exists():
-#         messages.warning(request, "Tu carrito está vacío. Añade productos antes de registrar la venta.")
-#         return redirect('ver_carrito')
+#     # Búsqueda
+#     consulta = request.GET.get('buscar', '')
+#     if consulta:
+#         productos_disponibles = productos_disponibles.filter(nombre__icontains=consulta)
 
+#     # Paginación
+#     paginator = Paginator(productos_disponibles, 20)
+#     page_number = request.GET.get("page")
+#     page_obj = paginator.get_page(page_number)
+
+#     # Procesamiento del formulario POST
 #     if request.method == 'POST':
-#         venta_form = VentaForm(request.POST)
-#         if venta_form.is_valid():
-#             venta = venta_form.save(commit=False)
-#             venta.dependienta = request.user
-#             venta.save()
+#         gasto_form = GastoForm(request.POST)
+#         if gasto_form.is_valid():
+#             gasto = gasto_form.save(commit=False)
+#             gasto.responsable = request.user  # ✅ Campo obligatorio
+#             gasto.fecha = timezone.now()
+#             gasto.save()
 
-#             # Crear los VentaItem desde los productos del carrito
-#             for item in items:
-#                 VentaItem.objects.create(
-#                     venta=venta,
-#                     producto=item.producto,
-#                     cantidad=item.cantidad
-#                 )
-#                 # Descontar del stock
-#                 item.producto.cantidad -= item.cantidad
-#                 item.producto.save()
+#             # Obtener productos seleccionados y sus cantidades
+#             productos = request.POST.getlist('producto_id')
+#             cantidades = request.POST.getlist('cantidad')
 
-#             # Vaciar el carrito
-#             carrito.items.all().delete()
+#             for pid, cant in zip(productos, cantidades):
+#                 try:
+#                     producto = Producto.objects.get(id=pid, deshabilitado=False)
+#                     cantidad = int(cant)
+#                     if cantidad > 0 and producto.cantidad >= cantidad:
+#                         # Crear el gasto del producto
+#                         GastoItem.objects.create(
+#                             gasto=gasto,
+#                             producto=producto,
+#                             cantidad=cantidad
+#                         )
+#                         # Descontar del stock
+#                         producto.cantidad -= cantidad
+#                         producto.save()
+#                 except Exception:
+#                     continue  # Silenciar errores puntuales por seguridad
 
-#             messages.success(request, "Venta registrada exitosamente.")
+#             messages.success(request, "✅ Gasto registrado correctamente.")
 #             return redirect('gestionar_venta')
 #     else:
-#         venta_form = VentaForm()
+#         gasto_form = GastoForm()
 
-#     precio_total = sum(item.producto.precio * item.cantidad for item in items)
-
-#     return render(request, 'nueva_venta.html', {
-#         'venta_form': venta_form,
-#         'items': items,
-#         'precio_total': precio_total,
-#         'usuario': request.user,  # Para mostrar el nombre en la plantilla
-#     })
-    
-    
-    
-   # Vistas relacionadas con ventas
-
-# @login_required
-# def listado_productos_venta(request):
-#     productos = Producto.objects.filter(disponibilidad=True)
-
-#     return render(request, 'listado_productos_venta.html', {
-#         'productos': productos
-#     })
-
-
-
-# @login_required
-# # @user_passes_test(es_dependienta)  # Puedes activar esta validación si defines el test de rol
-# def nueva_venta(request):
-#     # Se define un formset para agregar varios productos a la venta
-#     VentaItemFormSet = modelformset_factory(
-#         VentaItem, form=VentaItemForm, extra=3, can_delete=True
-#     )
-
-#     if request.method == 'POST':
-#         venta_form = VentaForm(request.POST)
-#         formset = VentaItemFormSet(request.POST, queryset=VentaItem.objects.none())
-
-#         if venta_form.is_valid() and formset.is_valid():
-#             venta = venta_form.save(commit=False)
-#             venta.dependienta = request.user  # Asigna la dependienta actual
-#             venta.save()
-
-#             for form in formset:
-#                 if form.cleaned_data:
-#                     item = form.save(commit=False)
-#                     item.venta = venta
-#                     item.save()
-
-#             return redirect('gestionar_venta')  # Redirige al listado de ventas
-
-#     else:
-#         venta_form = VentaForm()
-#         formset = VentaItemFormSet(queryset=VentaItem.objects.none())
-
-#     return render(request, 'nueva_venta.html', {
-#         'venta_form': venta_form,
-#         'formset': formset,
+#     # Renderizar el formulario con los productos paginados
+#     return render(request, 'nuevo_gasto.html', {
+#         'form': gasto_form,
+#         'productos': page_obj,
+#         'buscar': consulta
 #     })

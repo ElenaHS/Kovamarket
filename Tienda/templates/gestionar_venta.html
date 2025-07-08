@@ -9,6 +9,7 @@
         <a href="{% url 'nueva_venta' %}" class="btn btn-kova shadow-sm">
             <i class="fas fa-plus-circle me-2"></i> Nueva venta
         </a>
+        
     </div>
 
     <!-- Formulario para generar reporte -->
@@ -45,6 +46,7 @@
                     <th>#</th>
                     <th>Fecha</th>
                     <th>Forma de pago</th>
+                    <th>Motivo del gasto</th>
                     <th>Total</th>
                     <th>Código de transferencia</th>
                     <th>Acciones</th>
@@ -60,6 +62,17 @@
                             <span class="badge bg-success"><i class="fas fa-money-bill-wave me-1"></i> Efectivo</span>
                         {% elif venta.forma_pago == "transferencia" %}
                             <span class="badge bg-info text-dark"><i class="fas fa-university me-1"></i> Transferencia</span>
+                        {% elif venta.forma_pago == "gasto" %}
+                            <span class="badge bg-danger"><i class="fas fa-file-invoice-dollar me-1"></i> Gasto</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ venta.forma_pago }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if venta.forma_pago == "gasto" and venta.motivo_gasto %}
+                            {{ venta.motivo_gasto }}
+                        {% else %}
+                            <span class="text-muted">—</span>
                         {% endif %}
                     </td>
                     <td class="fw-bold text-kova">${{ venta.total_a_pagar|floatformat:2 }}</td>
@@ -171,4 +184,3 @@
     }
 </style>
 {% endblock %}
-

@@ -62,6 +62,7 @@ urlpatterns = [
     path('ventas/nueva/', nueva_venta, name='nueva_venta'),
     path('ventas/<int:venta_id>/detalle/', detalle_venta, name='detalle_venta'),
     path('ventas/reporte_pdf/', generar_reporte_pdf, name='generar_reporte_pdf'),
+    # path('gastos/nuevo/', nuevo_gasto, name='nuevo_gasto'),
     
     # Manejo de errores
     path('error-permisos/', error_permisos, name='error_permisos'),

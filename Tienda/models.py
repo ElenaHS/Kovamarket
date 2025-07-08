@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
-
+from django.utils.timezone import now
 
 # Modelo de Categoría
 class Categoria(models.Model):
@@ -43,13 +43,9 @@ class Producto(models.Model):
     imagen_url = models.URLField(blank=True, null=True, help_text="Pega aquí el enlace directo de la imagen")
     descripcion = models.TextField(blank=True)
 
-    # Precio de venta actual del producto (inicialmente 0)
     precio = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    
-    # Precio de venta actual en efectivo del producto (inicialmente 0)
     precio_efectivo = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
-    # Código y vencimiento pueden estar vacíos
     codigo = models.CharField(max_length=100, blank=True, null=True)
     fecha_vencimiento = models.DateField(blank=True, null=True)
 
@@ -60,9 +56,10 @@ class Producto(models.Model):
     envio_gratis = models.BooleanField(default=False)
 
     cantidad = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
-
-    # Nuevo campo: indica si el producto pertenece a "Venta de garaje"
     venta_de_garaje = models.BooleanField(default=False)
+
+    # 🆕 Campo para ocultar productos que ya no se usarán
+    deshabilitado = models.BooleanField(default=False, help_text="Marca este producto como deshabilitado si ya no se vende ni repone.")
 
     fecha_creado = models.DateTimeField(auto_now_add=True)
     fecha_modificado = models.DateTimeField(auto_now=True)
@@ -93,6 +90,7 @@ class Producto(models.Model):
         super().save(*args, **kwargs)
 
 
+
         
         
 # Modelo de Entrada de productos
@@ -111,26 +109,42 @@ class Entrada(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Al guardar una entrada, se actualiza el producto asociado:
-        - Se suma la nueva cantidad.
-        - Se actualizan precio normal, precio efectivo, código y fecha de vencimiento.
+        Al guardar una entrada, se ajusta el stock y, si corresponde, se actualizan los datos del producto.
+        - Si se edita una entrada antigua, solo se ajusta el stock.
+        - Si la entrada es la más reciente para ese producto, se actualizan precio, código, vencimiento.
         """
-        super().save(*args, **kwargs)
+        es_actualizacion = self.pk is not None
+
+        # Guardar valores previos antes de actualizar
+        if es_actualizacion:
+            entrada_anterior = Entrada.objects.get(pk=self.pk)
+            cantidad_anterior = entrada_anterior.nueva_cantidad
+        else:
+            cantidad_anterior = 0
+
+        super().save(*args, **kwargs)  # Guardar entrada primero
 
         producto = self.producto
-        producto.cantidad += self.nueva_cantidad
-        producto.precio = self.precio_venta
-        producto.precio_efectivo = self.precio_venta_efectivo  # 🆕 Se actualiza el nuevo campo
-        producto.codigo = self.nuevo_codigo
 
-        if self.nueva_fecha_vencimiento:
-            producto.fecha_vencimiento = self.nueva_fecha_vencimiento
+        # Ajustar cantidad del producto (resta lo anterior y suma lo nuevo)
+        producto.cantidad -= cantidad_anterior
+        producto.cantidad += self.nueva_cantidad
+
+        # Verificar si esta entrada es la más reciente
+        ultima_entrada = Entrada.objects.filter(producto=producto).order_by('-fecha_entrada').first()
+
+        if ultima_entrada and ultima_entrada.pk == self.pk:
+            # Solo si esta entrada es la más reciente se actualizan estos campos
+            producto.precio = self.precio_venta
+            producto.precio_efectivo = self.precio_venta_efectivo
+            producto.codigo = self.nuevo_codigo
+            if self.nueva_fecha_vencimiento:
+                producto.fecha_vencimiento = self.nueva_fecha_vencimiento
 
         producto.save()
 
     def __str__(self):
         return f"Entrada de {self.nueva_cantidad} x {self.producto.nombre} ({self.fecha_entrada.date()})"
-
 
 # Modelo de pregunta
 class Pregunta(models.Model):
@@ -178,18 +192,28 @@ class Venta(models.Model):
     FORMA_PAGO_OPCIONES = [
         ('efectivo', 'Efectivo'),
         ('transferencia', 'Transferencia'),
+        ('gasto', 'Agregar a gastos'),  # 🆕 Nueva opción
     ]
-    forma_pago = models.CharField(max_length=20, choices=FORMA_PAGO_OPCIONES)
+    forma_pago = models.CharField(max_length=30, choices=FORMA_PAGO_OPCIONES)
     codigo_transferencia = models.CharField(max_length=100, blank=True, null=True)
 
-    # ✅ Nuevo campo para guardar el total final
     total_a_pagar = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    # 🆕 Campo para guardar el motivo del gasto si la venta fue registrada como "gasto"
+    motivo_gasto = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Describe el motivo si esta venta fue registrada como gasto"
+    )
 
     def __str__(self):
         return f"Venta #{self.id} - {self.dependienta.username} - {self.fecha.strftime('%Y-%m-%d %H:%M')}"
 
     class Meta:
         ordering = ['-fecha']
+
+
+        
 
 
 # Modelo intermedio para registrar los productos y su cantidad en cada venta
@@ -234,3 +258,30 @@ class VentaTemporalItem(models.Model):
 
     def __str__(self):
         return f'{self.cantidad} x {self.producto.nombre}'
+
+
+
+
+
+# # Modelo de Gasto (productos usados internamente)
+# class Gasto(models.Model):
+#     responsable = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gastos')
+#     fecha = models.DateTimeField(auto_now_add=True)
+#     descripcion = models.TextField(blank=True, help_text="Describe brevemente el motivo del gasto")
+
+#     def __str__(self):
+#         return f"Gasto #{self.id} - {self.responsable.username} - {self.fecha.strftime('%Y-%m-%d %H:%M')}"
+
+#     class Meta:
+#         ordering = ['-fecha']
+
+
+
+# # Detalle de productos utilizados en el gasto
+# class GastoItem(models.Model):
+#     gasto = models.ForeignKey(Gasto, related_name='items', on_delete=models.CASCADE)
+#     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+#     cantidad = models.PositiveIntegerField(default=1)
+
+#     def __str__(self):
+#         return f'{self.cantidad} x {self.producto.nombre} (Gasto #{self.gasto.id})'

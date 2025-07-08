@@ -15,12 +15,19 @@
             <p><strong>Forma de pago:</strong>
                 {% if venta.forma_pago == 'efectivo' %}
                     <span class="badge bg-success"><i class="fas fa-money-bill-wave me-1"></i> Efectivo</span>
-                {% else %}
+                {% elif venta.forma_pago == 'transferencia' %}
                     <span class="badge bg-info text-dark"><i class="fas fa-university me-1"></i> Transferencia</span>
+                {% elif venta.forma_pago == 'gasto' %}
+                    <span class="badge bg-danger"><i class="fas fa-file-invoice-dollar me-1"></i> Gasto</span>
+                {% else %}
+                    <span class="badge bg-secondary">{{ venta.forma_pago }}</span>
                 {% endif %}
             </p>
             {% if venta.codigo_transferencia %}
                 <p><strong>Código de transferencia:</strong> <code>{{ venta.codigo_transferencia }}</code></p>
+            {% endif %}
+            {% if venta.forma_pago == 'gasto' and venta.motivo_gasto %}
+                <p><strong>Motivo del gasto:</strong> {{ venta.motivo_gasto }}</p>
             {% endif %}
             <p><strong>Total a pagar:</strong> <span class="fw-bold text-kova">${{ venta.total_a_pagar|floatformat:2 }}</span></p>
         </div>

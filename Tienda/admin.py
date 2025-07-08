@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import Categoria, Producto, Marca, Pregunta, Carrito, CarritoItem, Venta, VentaItem, Entrada 
+from .models import Categoria, Producto, Marca, Pregunta, Carrito, CarritoItem, Venta, VentaItem, Entrada
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 
 
@@ -31,42 +32,48 @@ class MarcaAdmin(admin.ModelAdmin):
 # Este es el admin de Producto
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    # Campos que se mostrarán en la lista de productos en el panel de administración
     list_display = [
         'nombre', 'slug', 'codigo', 'fecha_vencimiento',
-        'categoria', 'marca', 'precio', 'precio_efectivo',  # Se agregó precio_efectivo
+        'categoria', 'marca', 'precio', 'precio_efectivo',
         'cantidad', 'disponibilidad', 'peso',
-        'venta_de_garaje', 'fecha_creado', 'imagen_preview'
+        'venta_de_garaje', 'deshabilitado',  # ✅ Se añade aquí
+        'fecha_creado', 'imagen_preview'
     ]
 
-    # Filtros en la barra lateral del admin
     list_filter = [
         'disponibilidad', 'categoria', 'marca',
-        'fecha_creado', 'fecha_vencimiento', 'venta_de_garaje'
+        'fecha_creado', 'fecha_vencimiento',
+        'venta_de_garaje', 'deshabilitado'  # ✅ También como filtro
     ]
 
-    # Campos sobre los que se puede buscar
     search_fields = ['nombre', 'descripcion', 'codigo', 'marca__nombre']
-
-    # Slug autocompletado desde el nombre
     prepopulated_fields = {'slug': ('nombre',)}
-
-    # Barra de navegación por fechas
     date_hierarchy = 'fecha_creado'
-
-    # Orden predeterminado de los resultados
     ordering = ['nombre']
 
-    # Campos que se pueden editar directamente desde la lista
-    list_editable = ['precio', 'precio_efectivo', 'cantidad', 'disponibilidad', 'peso', 'venta_de_garaje']
-
-    # Campos de relaciones con autocompletado
+    list_editable = ['disponibilidad', 'peso', 'venta_de_garaje', 'deshabilitado']  # ✅ Se puede editar desde la lista
     autocomplete_fields = ['categoria', 'marca']
-
-    # Mostrar botones de guardar también en la parte superior del formulario
     save_on_top = True
 
-    # Método para mostrar una miniatura de la imagen en la vista de lista
+    readonly_fields = ['fecha_creado', 'fecha_modificado']
+
+    def get_readonly_fields(self, request, obj=None):
+        campos_base = ['fecha_creado', 'fecha_modificado']
+        if obj:
+            campos_extra = [
+                'precio',
+                'precio_efectivo',
+                'cantidad',
+                'codigo',
+                'fecha_vencimiento',
+            ]
+            return campos_base + campos_extra
+        return campos_base
+
+    def has_delete_permission(self, request, obj=None):
+        # ❌ No permitir eliminación de productos
+        return False
+
     def imagen_preview(self, obj):
         if obj.imagen_url:
             return format_html(
@@ -75,23 +82,21 @@ class ProductoAdmin(admin.ModelAdmin):
             )
         return "(No Image)"
     imagen_preview.short_description = 'Imagen'
-
     
     
     
-
 # Admin de Entrada de productos (reabastecimiento)
 @admin.register(Entrada)
 class EntradaAdmin(admin.ModelAdmin):
     list_display = [
         'producto',
         'nuevo_codigo',
-        'nueva_fecha_vencimiento',  # Fecha de vencimiento
+        'nueva_fecha_vencimiento',
         'precio_costo',
         'precio_venta',
-        'precio_venta_efectivo',     # ✅ Campo nuevo añadido
+        'precio_venta_efectivo',
         'nueva_cantidad',
-        'fecha_entrada'
+        'fecha_entrada',
     ]
     list_filter = ['producto', 'fecha_entrada', 'nueva_fecha_vencimiento']
     search_fields = ['producto__nombre', 'nuevo_codigo']
@@ -99,8 +104,27 @@ class EntradaAdmin(admin.ModelAdmin):
     date_hierarchy = 'fecha_entrada'
     ordering = ['-fecha_entrada']
     save_on_top = True
+    readonly_fields = ['fecha_entrada']
 
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if 'producto' in form.base_fields:
+            form.base_fields['producto'].queryset = Producto.objects.filter(deshabilitado=False)
+        return form
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def render_change_form(self, request, context, *args, **kwargs):
+        if 'adminform' in context and 'producto' in context['adminform'].form.fields:
+            context['adminform'].form.fields['producto'].help_text = mark_safe(
+                "<div style='color: #b94a48; font-weight: bold; padding: 6px;'>"
+                "⚠️ <strong>Importante:</strong> No elimines entradas. "
+                "Si cometiste un error, registra una entrada correctiva (positiva o negativa) para ajustar el stock. "
+                "Solo edita si estás completamente seguro."
+                "</div>"
+            )
+        return super().render_change_form(request, context, *args, **kwargs)
 
 
     
@@ -138,13 +162,35 @@ class CarritoItemAdmin(admin.ModelAdmin):
 # Admin de Venta
 @admin.register(Venta)
 class VentaAdmin(admin.ModelAdmin):
-    list_display = ['id', 'dependienta', 'fecha', 'forma_pago', 'codigo_transferencia', 'total_a_pagar']  # ✅ se añadió total_a_pagar
+    list_display = [
+        'id',
+        'dependienta',
+        'fecha',
+        'forma_pago_coloreada',  # ✅ Mostramos forma de pago con etiquetas
+        'codigo_transferencia',
+        'total_a_pagar',
+    ]
     list_filter = ['forma_pago', 'fecha']
     search_fields = ['dependienta__username', 'codigo_transferencia']
     date_hierarchy = 'fecha'
     autocomplete_fields = ['dependienta']
     save_on_top = True
     ordering = ['-fecha']
+
+    def forma_pago_coloreada(self, obj):
+        """
+        Devuelve la forma de pago con una etiqueta de color según el tipo.
+        """
+        colores = {
+            'efectivo': 'success',
+            'transferencia': 'info',
+            'gasto': 'danger',
+        }
+        color = colores.get(obj.forma_pago, 'secondary')
+        label = dict(obj.FORMA_PAGO_OPCIONES).get(obj.forma_pago, obj.forma_pago)
+        return format_html(f'<span class="badge bg-{color}">{label}</span>')
+
+    forma_pago_coloreada.short_description = 'Forma de pago'
 
 
 
@@ -156,3 +202,41 @@ class VentaItemAdmin(admin.ModelAdmin):
     list_filter = ['producto']
     autocomplete_fields = ['venta', 'producto']
     save_on_top = True
+
+
+
+
+# # Admin para Gasto
+# @admin.register(Gasto)
+# class GastoAdmin(admin.ModelAdmin):
+#     list_display = ['id', 'responsable', 'fecha', 'descripcion_corta', 'total_productos']
+#     list_filter = ['responsable', 'fecha']
+#     search_fields = ['descripcion', 'responsable__username']
+#     date_hierarchy = 'fecha'
+#     ordering = ['-fecha']
+#     readonly_fields = ['fecha']
+
+#     def descripcion_corta(self, obj):
+#         return obj.descripcion[:50] + "..." if obj.descripcion and len(obj.descripcion) > 50 else obj.descripcion
+#     descripcion_corta.short_description = 'Descripción'
+
+#     def total_productos(self, obj):
+#         return sum(item.cantidad for item in obj.items.all())
+#     total_productos.short_description = 'Total de productos usados'
+
+#     def has_delete_permission(self, request, obj=None):
+#         return False
+    
+    
+    
+# # Admin para gasto item
+# @admin.register(GastoItem)
+# class GastoItemAdmin(admin.ModelAdmin):
+#     list_display = ['gasto', 'producto', 'cantidad']
+#     list_filter = ['producto']
+#     search_fields = ['producto__nombre', 'gasto__id']
+#     autocomplete_fields = ['gasto', 'producto']
+#     ordering = ['-gasto__fecha']
+
+#     def has_delete_permission(self, request, obj=None):
+#         return False

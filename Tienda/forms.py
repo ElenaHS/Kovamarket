@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from .models import Venta, VentaItem, Producto
@@ -101,27 +101,64 @@ class LoginForm(AuthenticationForm):
     
 # Formulario para los datos de la venta (forma de pago y código)
 class VentaForm(forms.ModelForm):
+    FORMA_PAGO_OPCIONES = [
+        ('efectivo', 'Efectivo'),
+        ('transferencia', 'Transferencia'),
+        ('gasto', 'Agregar a gastos'),
+    ]
+
+    forma_pago = forms.ChoiceField(
+        choices=FORMA_PAGO_OPCIONES,
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'placeholder': 'Seleccione forma de pago'
+        }),
+        label="Forma de pago"
+    )
+
+    codigo_transferencia = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Código de transferencia (si aplica)',
+        }),
+        label="Código de transferencia"
+    )
+
+    # Campo motivo para gasto
+    motivo_gasto = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Especifique el motivo del gasto'
+        }),
+        label="Motivo del gasto"
+    )
+
     class Meta:
         model = Venta
-        fields = ['forma_pago', 'codigo_transferencia']
-        widgets = {
-            'forma_pago': forms.Select(attrs={
-                'class': 'form-select',
-                'placeholder': 'Seleccione forma de pago'
-            }),
-            'codigo_transferencia': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Código de transferencia (si aplica)',
-            }),
-        }
+        fields = ['forma_pago', 'codigo_transferencia', 'motivo_gasto']
 
     def __init__(self, *args, **kwargs):
-        super(VentaForm, self).__init__(*args, **kwargs)
-        self.fields['forma_pago'].label = "Forma de pago"
-        self.fields['codigo_transferencia'].label = "Código de transferencia"
+        super().__init__(*args, **kwargs)
 
+    def clean(self):
+        cleaned_data = super().clean()
+        forma_pago = cleaned_data.get("forma_pago")
+        codigo = cleaned_data.get("codigo_transferencia")
+        motivo_gasto = cleaned_data.get("motivo_gasto")
 
+        # Validaciones existentes
+        if forma_pago == "transferencia" and not codigo:
+            self.add_error("codigo_transferencia", "Debe ingresar el código de transferencia.")
 
+        # Nueva validación: si se selecciona gasto, debe ingresar motivo
+        if forma_pago == "gasto" and not motivo_gasto:
+            self.add_error("motivo_gasto", "Debe especificar el motivo del gasto.")
+            
+            
+            
 
 # Formulario individual para añadir productos a la venta
 class VentaItemForm(forms.ModelForm):
@@ -145,3 +182,20 @@ class VentaItemForm(forms.ModelForm):
         self.fields['producto'].label = "Producto"
         self.fields['cantidad'].label = "Cantidad"
 
+
+
+# # Formulario para un nuevo gasto 
+# class GastoForm(forms.ModelForm):
+#     class Meta:
+#         model = Gasto
+#         fields = ['descripcion']
+#         widgets = {
+#             'descripcion': forms.Textarea(attrs={
+#                 'class': 'form-control',
+#                 'rows': 3,
+#                 'placeholder': 'Ejemplo: Producto usado para limpieza de la tienda.'
+#             })
+#         }
+#         labels = {
+#             'descripcion': 'Motivo del gasto',
+#         }
