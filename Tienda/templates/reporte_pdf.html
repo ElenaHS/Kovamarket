@@ -116,7 +116,7 @@
 
     {% for venta in ventas %}
     <div class="venta">
-        <h3>Venta #{{ venta.id }} | {{ venta.fecha|date:"d/m/Y H:i" }}</h3>
+        <h3>#{{ venta.id }} | {{ venta.fecha|date:"d/m/Y H:i" }}</h3>
         <p><strong>Forma de pago:</strong> 
             {% if venta.forma_pago == "efectivo" %}
                 <span>Efectivo</span>
@@ -126,11 +126,11 @@
                 <span>Gasto</span>
             {% endif %}
         </p>
-        {% if venta.forma_pago == "transferencia" or venta.forma_pago == "gasto" %}
-            {% if venta.codigo_transferencia %}
-                <p><strong>Código de transferencia:</strong> {{ venta.codigo_transferencia }}</p>
-            {% endif %}
-        {% endif %}
+        {% if venta.forma_pago == "transferencia" and venta.codigo_transferencia %}
+    <p><strong>Código de transferencia:</strong> {{ venta.codigo_transferencia }}</p>
+{% elif venta.forma_pago == "gasto" and venta.motivo_gasto %}
+    <p><strong>Motivo del gasto:</strong> {{ venta.motivo_gasto }}</p>
+{% endif %}
 
         <table>
             <thead>
@@ -164,7 +164,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        <p class="total-venta">Total de esta venta: ${{ venta.total_a_pagar|floatformat:2 }}</p>
+        <p class="total-venta">Total: ${{ venta.total_a_pagar|floatformat:2 }}</p>
     </div>
     {% empty %}
         <p>No hay ventas con ese filtro.</p>
@@ -173,10 +173,10 @@
     <!-- Resumen final -->
     <div class="resumen-final">
         <h4>Resumen General</h4>
-        <p>Total en efectivo: ${{ total_efectivo|floatformat:2 }}</p>
-        <p>Total en transferencia: ${{ total_transferencia|floatformat:2 }}</p>
-        <p>Total en gasto: ${{ total_gasto|floatformat:2 }}</p>
-        <p><strong>Total general:</strong> ${{ total_general|floatformat:2 }}</p>
+        <p>Total de ingresos en efectivo: ${{ total_efectivo|floatformat:2 }}</p>
+        <p>Total de ingresos en transferencia: ${{ total_transferencia|floatformat:2 }}</p>
+        <p>Total de gastos: ${{ total_gasto|floatformat:2 }}</p>
+        <p><strong>Total de ingresos:</strong> ${{ total_general|floatformat:2 }}</p>
     </div>
 </body>
 </html>

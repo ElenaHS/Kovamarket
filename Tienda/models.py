@@ -258,6 +258,41 @@ class VentaTemporalItem(models.Model):
 
     def __str__(self):
         return f'{self.cantidad} x {self.producto.nombre}'
+    
+    
+# Modelo para hacer el cuadre
+class Cuadre(models.Model):
+    fecha = models.DateField(unique=True)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Cuadre {self.fecha} - {self.usuario.username}"
+
+class CuadreDetalle(models.Model):
+    cuadre = models.ForeignKey(Cuadre, related_name='detalles', on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad_inicial = models.PositiveIntegerField()
+    entradas = models.PositiveIntegerField(default=0)
+
+    cantidad_gasto = models.PositiveIntegerField(default=0)
+    precio_unitario_gasto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    importe_gasto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    cantidad_transferencia = models.PositiveIntegerField(default=0)
+    precio_unitario_transferencia = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    importe_transferencia = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    cantidad_efectivo = models.PositiveIntegerField(default=0)
+    precio_unitario_efectivo = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    importe_efectivo = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    importe_total_producto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    cantidad_final = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.producto.nombre} - Cuadre {self.cuadre.fecha}"
+
 
 
 

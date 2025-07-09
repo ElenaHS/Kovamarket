@@ -13,6 +13,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,10 +32,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 'RENDER' not in os.environ
 
-if not DEBUG:
-    SECRET_KEY = os.environ.get('SECRET_KEY', default = "Esta es una contraseña") 
-else: 
-    SECRET_KEY = 'django-insecure-74dsnu8gbvktch_^ep2rq78saecp^l8+ag3+po40!3dh)yrn(m'
+SECRET_KEY = os.environ.get('SECRET_KEY', default = "Esta es una contraseña") 
 
 ALLOWED_HOSTS = []
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -98,7 +100,7 @@ if DEBUG:
 else:
     DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://neondb_owner:npg_2zCI3wUunbfH@ep-weathered-morning-a8ib7sig-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require',
+        default=os.environ.get('database_url'),
         conn_max_age=600
         )
     }

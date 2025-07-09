@@ -327,8 +327,7 @@ def generar_reporte_pdf(request):
         elif venta.forma_pago == 'gasto':
             total_gasto += float(venta.total_a_pagar)
 
-    total_general = total_efectivo + total_transferencia + total_gasto
-
+    total_general = total_efectivo + total_transferencia
     # Contexto para la plantilla
     context = {
         'ventas': ventas_filtradas,
