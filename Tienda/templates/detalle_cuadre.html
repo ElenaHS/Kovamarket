@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3 class="text-kova fw-bold mb-4">
+        <i class="fas fa-balance-scale me-2"></i> Cuadre del día {{ cuadre.fecha }}
+    </h3>
+
+    <p><strong>Responsable:</strong> {{ cuadre.usuario.username }}</p>
+    <p><strong>Generado en:</strong> {{ cuadre.creado_en|date:"d/m/Y H:i" }}</p>
+
+    <div class="table-responsive shadow-sm border rounded mt-4">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-uppercase text-secondary">
+                <tr>
+                    <th>Producto</th>
+                    <th>Inicial</th>
+                    <th>Entradas</th>
+                    <th>Gasto (Cant/Precio/Importe)</th>
+                    <th>Transferencia (Cant/Precio/Importe)</th>
+                    <th>Efectivo (Cant/Precio/Importe)</th>
+                    <th>Importe total</th>
+                    <th>Final</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in detalles %}
+                <tr>
+                    <td>{{ d.producto.nombre }}</td>
+                    <td>{{ d.cantidad_inicial }}</td>
+                    <td>{{ d.entradas }}</td>
+                    <td>{{ d.cantidad_gasto }} / ${{ d.precio_unitario_gasto|floatformat:2 }} / ${{ d.importe_gasto|floatformat:2 }}</td>
+                    <td>{{ d.cantidad_transferencia }} / ${{ d.precio_unitario_transferencia|floatformat:2 }} / ${{ d.importe_transferencia|floatformat:2 }}</td>
+                    <td>{{ d.cantidad_efectivo }} / ${{ d.precio_unitario_efectivo|floatformat:2 }} / ${{ d.importe_efectivo|floatformat:2 }}</td>
+                    <td class="fw-bold text-kova">${{ d.importe_total_producto|floatformat:2 }}</td>
+                    <td>{{ d.cantidad_final }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a href="{% url 'listar_cuadre' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Volver al listado
+        </a>
+    </div>
+</div>
+
+<style>
+.text-kova {
+    color: #fc7319;
+}
+</style>
+{% endblock %}

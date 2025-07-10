@@ -262,7 +262,7 @@ class VentaTemporalItem(models.Model):
     
 # Modelo para hacer el cuadre
 class Cuadre(models.Model):
-    fecha = models.DateField(unique=True)
+    fecha = models.DateField()
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     creado_en = models.DateTimeField(auto_now_add=True)
 

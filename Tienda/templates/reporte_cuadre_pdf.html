@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reporte de Cuadre</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 20px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            color: #333;
+        }
+
+        h1 {
+            color: #fc7319;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .info p {
+            margin: 4px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 4px 5px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .resumen-final {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 2px solid #444;
+        }
+
+        .resumen-final h3 {
+            color: #fc7319;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Encabezado -->
+    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <img src="https://i.ibb.co/HLzVRXTX/logo-kovamarket.png" style="width: 60px; margin-right: 15px;">
+        <div>
+            <h1>Reporte de Cuadre</h1>
+            <p style="margin: 0;"><strong>Fecha:</strong> {{ cuadre.fecha }}</p>
+            <p style="margin: 0;"><strong>Generado por:</strong> {{ request.user.username }}</p>
+            <p style="margin: 0;"><strong>Responsable del cuadre:</strong> {{ cuadre.usuario.username }}</p>
+            <p style="margin: 0;"><strong>Generado en:</strong> {{ ahora|date:"d/m/Y H:i" }}</p>
+        </div>
+    </div>
+
+    <!-- Tabla con todos los datos del cuadre -->
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad Inicial</th>
+                <th>Entradas</th>
+
+                <th>Gasto Cantidad </th>
+                <th>Gasto Precio</th>
+                <th>Gasto Importe</th>
+
+                <th>Transf. Cantidad</th>
+                <th>Transf. Precio</th>
+                <th>Transf. Importe</th>
+
+                <th>Efectivo Cantidad</th>
+                <th>Efectivo Precio</th>
+                <th>Efectivo Importe</th>
+
+                <th>Cantidad Final</th>
+                <th>Importe Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in detalles %}
+            <tr>
+                <td>{{ d.producto.nombre }}</td>
+                <td>{{ d.cantidad_inicial }}</td>
+                <td>{{ d.entradas }}</td>
+
+                <td>{{ d.cantidad_gasto }}</td>
+                <td>${{ d.precio_unitario_gasto|floatformat:2 }}</td>
+                <td>${{ d.importe_gasto|floatformat:2 }}</td>
+
+                <td>{{ d.cantidad_transferencia }}</td>
+                <td>${{ d.precio_unitario_transferencia|floatformat:2 }}</td>
+                <td>${{ d.importe_transferencia|floatformat:2 }}</td>
+
+                <td>{{ d.cantidad_efectivo }}</td>
+                <td>${{ d.precio_unitario_efectivo|floatformat:2 }}</td>
+                <td>${{ d.importe_efectivo|floatformat:2 }}</td>
+
+                <td>{{ d.cantidad_final }}</td>
+                <td><strong>${{ d.importe_total_producto|floatformat:2 }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Resumen final -->
+    <div class="resumen-final">
+        <h3>Resumen General</h3>
+        <p><strong>Total por ventas en efectivo:</strong> ${{ total_efectivo|floatformat:2 }}</p>
+        <p><strong>Total por ventas en transferencia:</strong> ${{ total_transferencia|floatformat:2 }}</p>
+        <p><strong>Total de gastos:</strong> ${{ total_gasto|floatformat:2 }}</p>
+        <p><strong>Total general de ingresos:</strong> ${{ total_general|floatformat:2 }}</p>
+    </div>
+
+</body>
+</html>

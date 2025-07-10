@@ -29,6 +29,11 @@ from .views import (
     detalle_venta,
     generar_reporte_pdf,
     error_permisos,
+    detalle_cuadre,
+    generar_cuadre,
+    listar_cuadre,
+    generar_pdf_reporte_cuadre,
+    
 )
 
 urlpatterns = [
@@ -62,6 +67,12 @@ urlpatterns = [
     path('ventas/nueva/', nueva_venta, name='nueva_venta'),
     path('ventas/<int:venta_id>/detalle/', detalle_venta, name='detalle_venta'),
     path('ventas/reporte_pdf/', generar_reporte_pdf, name='generar_reporte_pdf'),
+    path('cuadre/<int:cuadre_id>/', detalle_cuadre, name='detalle_cuadre'),
+    path('cuadre/generar/', generar_cuadre, name='generar_cuadre'),
+    path('cuadre/', listar_cuadre, name='listar_cuadre'),
+    path('cuadre/<int:cuadre_id>/reporte/', generar_pdf_reporte_cuadre, name='reporte_cuadre_pdf'),
+    
+   
     # path('gastos/nuevo/', nuevo_gasto, name='nuevo_gasto'),
     
     # Manejo de errores

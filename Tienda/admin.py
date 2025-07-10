@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categoria, Producto, Marca, Pregunta, Carrito, CarritoItem, Venta, VentaItem, Entrada
+from .models import Categoria, Producto, Marca, Pregunta, Carrito, CarritoItem, Venta, VentaItem, Entrada, Cuadre, CuadreDetalle
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -203,6 +203,55 @@ class VentaItemAdmin(admin.ModelAdmin):
     autocomplete_fields = ['venta', 'producto']
     save_on_top = True
 
+
+
+
+
+
+
+class CuadreDetalleInline(admin.TabularInline):
+    model = CuadreDetalle
+    extra = 0
+    readonly_fields = [
+        'producto',
+        'cantidad_inicial',
+        'entradas',
+        'cantidad_gasto',
+        'precio_unitario_gasto',
+        'importe_gasto',
+        'cantidad_transferencia',
+        'precio_unitario_transferencia',
+        'importe_transferencia',
+        'cantidad_efectivo',
+        'precio_unitario_efectivo',
+        'importe_efectivo',
+        'importe_total_producto',
+        'cantidad_final',
+    ]
+    can_delete = False
+    show_change_link = False
+    
+    
+    
+    
+
+@admin.register(Cuadre)
+class CuadreAdmin(admin.ModelAdmin):
+    list_display = ['fecha', 'usuario', 'creado_en']
+    search_fields = ['usuario__username']
+    list_filter = ['fecha', 'usuario']
+    ordering = ['-fecha']
+    inlines = [CuadreDetalleInline]
+    readonly_fields = ['fecha', 'usuario', 'creado_en']
+
+    def has_add_permission(self, request):
+        return False  # Para evitar que se creen desde el admin
+
+    def has_change_permission(self, request, obj=None):
+        return False  # Para que no se editen desde el admin
+
+    def has_delete_permission(self, request, obj=None):
+        return False  # Opcional: evitar eliminación desde admin
 
 
 

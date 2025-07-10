@@ -1,7 +1,7 @@
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Categoria, Producto, Pregunta, Carrito, CarritoItem, Venta, VentaItem, VentaTemporal, VentaTemporalItem
+from .models import Categoria, Producto, Pregunta, Carrito, CarritoItem, Venta, VentaItem, VentaTemporal, VentaTemporalItem, Cuadre, CuadreDetalle, Entrada
 from .forms import VentaForm, VentaItemForm
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
@@ -18,6 +18,18 @@ from django.http import HttpResponse
 from django.template.loader import get_template
 from decimal import Decimal
 from datetime import datetime
+from django.db.models import Sum
+from functools import wraps
+
+
+ 
+def permiso_dependiente_o_superusuario(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_authenticated and (request.user.is_superuser or request.user.groups.filter(name='Dependiente').exists()):
+            return view_func(request, *args, **kwargs)
+        return redirect('error_permisos')
+    return _wrapped_view
 
 
 
@@ -251,19 +263,7 @@ def buscar_productos(request):
     })
 
     
-    
-# Solo usuarios del grupo "dependienta"
-def es_dependienta(user):
-    return user.groups.filter(name='dependienta').exists()
-
-
-# Solo superusuarios
-def solo_superusuario(view_func):
-    def _wrapped_view(request, *args, **kwargs):
-        if not request.user.is_superuser:
-            return redirect('error_permisos')
-        return view_func(request, *args, **kwargs)
-    return login_required(_wrapped_view)
+   
 
 
 # Error de permisos
@@ -273,22 +273,30 @@ def error_permisos(request):
 
 
 # Vista para gestionar las ventas
-solo_superusuario
+@permiso_dependiente_o_superusuario
 @login_required
 def gestionar_venta(request):
-    ventas_lista = Venta.objects.filter(dependienta=request.user).order_by('-fecha')
-    paginator = Paginator(ventas_lista, 20)  # Cambia el 20 si deseas más o menos ventas por página
+    if request.user.is_superuser:
+        ventas_lista = Venta.objects.all().order_by('-fecha')
+    else:
+        ventas_lista = Venta.objects.filter(dependienta=request.user).order_by('-fecha')
+
+    paginator = Paginator(ventas_lista, 20)  # Puedes ajustar la cantidad por página
     page_number = request.GET.get("page")
     ventas = paginator.get_page(page_number)
+
     return render(request, 'gestionar_venta.html', {'ventas': ventas})
 
 
-
 # Vista para detalle de venta
-@solo_superusuario
+@permiso_dependiente_o_superusuario
 @login_required
 def detalle_venta(request, venta_id):
-    venta = get_object_or_404(Venta, id=venta_id, dependienta=request.user)
+    if request.user.is_superuser:
+        venta = get_object_or_404(Venta, id=venta_id)
+    else:
+        venta = get_object_or_404(Venta, id=venta_id, dependienta=request.user)
+
     items = venta.items.select_related('producto')
 
     # Calcular subtotal según forma de pago
@@ -304,9 +312,9 @@ def detalle_venta(request, venta_id):
         'items': items
     })
 
+
 # Vista para exportar a pdf
-@solo_superusuario
-@login_required
+@permiso_dependiente_o_superusuario
 def generar_reporte_pdf(request):
     filtro = request.GET.get('filtro')
     valor = request.GET.get('valor')
@@ -357,33 +365,47 @@ def generar_reporte_pdf(request):
     return response
 
 
-def filtrar_ventas_por_filtro(filtro, valor):
+@login_required
+@permiso_dependiente_o_superusuario
+
+def filtrar_ventas_por_filtro(filtro, valor, user):
+    """
+    Filtra las ventas por tipo de filtro y usuario.
+    - Superusuarios ven todas las ventas.
+    - Usuarios del grupo 'Dependiente' solo ven sus propias ventas.
+    """
     if not filtro or not valor:
-        return Venta.objects.none()  # No se proporciona filtro o valor
+        return Venta.objects.none()  # Si falta información, no devuelve nada
+
+    ventas = Venta.objects.all()
+
+    # Filtrar por usuario si no es superusuario
+    if not user.is_superuser:
+        ventas = ventas.filter(dependienta=user)
 
     try:
         if filtro == 'dia':
-            fecha = datetime.strptime(valor, '%Y-%m-%d')
-            return Venta.objects.filter(fecha__date=fecha.date())
+            fecha = datetime.strptime(valor, '%Y-%m-%d').date()
+            ventas = ventas.filter(fecha__date=fecha)
 
         elif filtro == 'mes':
             año, mes = map(int, valor.split('-'))
-            return Venta.objects.filter(fecha__year=año, fecha__month=mes)
+            ventas = ventas.filter(fecha__year=año, fecha__month=mes)
 
         elif filtro == 'año':
             año = int(valor)
-            return Venta.objects.filter(fecha__year=año)
+            ventas = ventas.filter(fecha__year=año)
 
     except Exception as e:
         print(f"Error en filtrado: {e}")
         return Venta.objects.none()
-    
-    
+
+    return ventas.order_by('-fecha')
     
 
 # Vista para la nueva venta 
 @login_required
-@solo_superusuario
+@permiso_dependiente_o_superusuario
 def nueva_venta(request):
     # Obtener o crear una venta temporal por usuario
     venta_temp, _ = VentaTemporal.objects.get_or_create(dependienta=request.user)
@@ -465,7 +487,7 @@ def nueva_venta(request):
 
 # Vista para agregar un producto (evita doble procesamiento)
 @login_required
-@solo_superusuario
+@permiso_dependiente_o_superusuario
 def agregar_producto_venta(request, producto_id):
     if request.method == "POST":
         venta_temp, _ = VentaTemporal.objects.get_or_create(dependienta=request.user)
@@ -489,7 +511,7 @@ def agregar_producto_venta(request, producto_id):
 
 # Aumentar cantidad de un producto en la venta temporal
 @login_required
-@solo_superusuario
+@permiso_dependiente_o_superusuario
 def aumentar_cantidad_venta(request, item_id):
     item = get_object_or_404(VentaTemporalItem, id=item_id, venta_temporal__dependienta=request.user)
     
@@ -504,7 +526,7 @@ def aumentar_cantidad_venta(request, item_id):
 
 # Disminuir cantidad de un producto en la venta temporal
 @login_required
-@solo_superusuario
+@permiso_dependiente_o_superusuario
 def disminuir_cantidad_venta(request, item_id):
     item = get_object_or_404(VentaTemporalItem, id=item_id, venta_temporal__dependienta=request.user)
     
@@ -519,6 +541,7 @@ def disminuir_cantidad_venta(request, item_id):
 
 # Vista para cancelar la venta
 @login_required
+@permiso_dependiente_o_superusuario
 
 def cancelar_venta(request):
     if request.method == "POST":
@@ -533,6 +556,140 @@ def cancelar_venta(request):
     return redirect("gestionar_venta")
 
 
+
+
+
+# Vista para realizar cuadre del d'ia 
+@login_required
+@permiso_dependiente_o_superusuario
+def generar_cuadre(request):
+    hoy = timezone.now().date()
+
+    productos = Producto.objects.all()
+    cuadre = Cuadre.objects.create(fecha=hoy, usuario=request.user)
+
+    for producto in productos:
+        entradas_dia = Entrada.objects.filter(producto=producto, fecha_entrada__date=hoy)
+        total_entradas = entradas_dia.aggregate(total=Sum("nueva_cantidad"))["total"] or 0
+
+        ventas_dia = Venta.objects.filter(fecha__date=hoy)
+        items_producto = VentaItem.objects.filter(venta__in=ventas_dia, producto=producto)
+
+        cantidad_gasto = items_producto.filter(venta__forma_pago="gasto").aggregate(
+            total=Sum("cantidad")
+        )["total"] or 0
+        precio_gasto = producto.precio
+        importe_gasto = cantidad_gasto * precio_gasto
+
+        cantidad_transferencia = items_producto.filter(venta__forma_pago="transferencia").aggregate(
+            total=Sum("cantidad")
+        )["total"] or 0
+        precio_transferencia = producto.precio
+        importe_transferencia = cantidad_transferencia * precio_transferencia
+
+        cantidad_efectivo = items_producto.filter(venta__forma_pago="efectivo").aggregate(
+            total=Sum("cantidad")
+        )["total"] or 0
+        precio_efectivo = producto.precio_efectivo
+        importe_efectivo = cantidad_efectivo * precio_efectivo
+
+        importe_total_producto = importe_transferencia + importe_efectivo
+
+        total_vendido = cantidad_gasto + cantidad_transferencia + cantidad_efectivo
+        cantidad_inicial = producto.cantidad + total_vendido - total_entradas
+        cantidad_final = producto.cantidad
+
+        # Opcional: prints de depuración
+        print(f"Producto: {producto.nombre}")
+        print(f"  Entradas: {total_entradas}")
+        print(f"  Vendido: {total_vendido}")
+        print(f"  Final: {cantidad_final}")
+
+        CuadreDetalle.objects.create(
+            cuadre=cuadre,
+            producto=producto,
+            cantidad_inicial=cantidad_inicial,
+            entradas=total_entradas,
+            cantidad_gasto=cantidad_gasto,
+            precio_unitario_gasto=precio_gasto,
+            importe_gasto=importe_gasto,
+            cantidad_transferencia=cantidad_transferencia,
+            precio_unitario_transferencia=precio_transferencia,
+            importe_transferencia=importe_transferencia,
+            cantidad_efectivo=cantidad_efectivo,
+            precio_unitario_efectivo=precio_efectivo,
+            importe_efectivo=importe_efectivo,
+            importe_total_producto=importe_total_producto,
+            cantidad_final=cantidad_final,
+        )
+
+    messages.success(request, f"✅ Cuadre generado exitosamente para el día {hoy}.")
+    return redirect("detalle_cuadre", cuadre.id)
+
+
+
+@login_required
+@permiso_dependiente_o_superusuario
+def detalle_cuadre(request, cuadre_id):
+    cuadre = get_object_or_404(Cuadre, id=cuadre_id)
+    detalles = cuadre.detalles.select_related('producto').all()
+
+    context = {
+        'cuadre': cuadre,
+        'detalles': detalles,
+    }
+    return render(request, 'detalle_cuadre.html', context)
+
+
+
+@login_required
+@permiso_dependiente_o_superusuario
+def listar_cuadre(request):
+    cuadres_lista = Cuadre.objects.select_related('usuario').order_by('-fecha', '-creado_en')
+    paginator = Paginator(cuadres_lista, 10)  # 10 cuadres por página
+
+    page_number = request.GET.get('page')
+    cuadres = paginator.get_page(page_number)
+
+    context = {
+        'cuadres': cuadres,
+    }
+    return render(request, 'listar_cuadre.html', context)
+
+
+
+# Vista para generar el reporte del cuadre en pdf
+@login_required
+@permiso_dependiente_o_superusuario
+def generar_pdf_reporte_cuadre(request, cuadre_id):
+    cuadre = get_object_or_404(Cuadre, id=cuadre_id)
+    detalles = cuadre.detalles.select_related('producto').all()
+
+    total_efectivo = detalles.aggregate(suma=Sum('importe_efectivo'))['suma'] or 0
+    total_transferencia = detalles.aggregate(suma=Sum('importe_transferencia'))['suma'] or 0
+    total_gasto = detalles.aggregate(suma=Sum('importe_gasto'))['suma'] or 0
+    total_general = total_efectivo + total_transferencia
+
+    context = {
+        'cuadre': cuadre,
+        'detalles': detalles,
+        'ahora': timezone.now(),
+        'request': request,
+        'total_efectivo': total_efectivo,
+        'total_transferencia': total_transferencia,
+        'total_gasto': total_gasto,
+        'total_general': total_general,
+    }
+
+    template = get_template('reporte_cuadre_pdf.html')
+    html = template.render(context)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename="reporte_cuadre_{cuadre.fecha}_{cuadre.id}.pdf"'
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('Ocurrió un error al generar el PDF', status=500)
+    return response
 
 
 # # Vista para registrar un nuevo gasto
