@@ -100,11 +100,16 @@ class EntradaAdmin(admin.ModelAdmin):
     ]
     list_filter = ['producto', 'fecha_entrada', 'nueva_fecha_vencimiento']
     search_fields = ['producto__nombre', 'nuevo_codigo']
-    autocomplete_fields = ['producto']
+    autocomplete_fields = ['producto']  # Puedes mantenerlo si quieres en modo creación
     date_hierarchy = 'fecha_entrada'
     ordering = ['-fecha_entrada']
     save_on_top = True
     readonly_fields = ['fecha_entrada']
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ['producto']
+        return self.readonly_fields
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -113,7 +118,7 @@ class EntradaAdmin(admin.ModelAdmin):
         return form
 
     def has_delete_permission(self, request, obj=None):
-         return False
+        return False
 
     def render_change_form(self, request, context, *args, **kwargs):
         if 'adminform' in context and 'producto' in context['adminform'].form.fields:

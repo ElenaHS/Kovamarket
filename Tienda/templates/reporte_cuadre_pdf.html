@@ -23,7 +23,7 @@
         }
 
         .info p {
-            margin: 4px 0;
+            margin: 3px 0;
         }
 
         table {
@@ -34,12 +34,25 @@
 
         th, td {
             border: 1px solid #ccc;
-            padding: 4px 5px;
+            padding: 5px;
             text-align: center;
         }
 
         th {
             background-color: #f2f2f2;
+            color: #555;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 9px;
+        }
+
+        td {
+            font-size: 9px;
+        }
+
+        .text-kova {
+            color: #fc7319;
+            font-weight: bold;
         }
 
         .resumen-final {
@@ -52,44 +65,54 @@
             color: #fc7319;
             margin-bottom: 8px;
         }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .logo-title img {
+            width: 60px;
+            height: auto;
+            margin-right: 15px;
+        }
+
+        .logo-title h1 {
+            margin: 0;
+        }
+
+        .fw-bold {
+    font-weight: bold;
+}
     </style>
 </head>
 <body>
 
     <!-- Encabezado -->
-    <div style="display: flex; align-items: center; margin-bottom: 20px;">
-        <img src="https://i.ibb.co/HLzVRXTX/logo-kovamarket.png" style="width: 60px; margin-right: 15px;">
+    <div class="logo-title">
+        <img src="https://i.ibb.co/HLzVRXTX/logo-kovamarket.png" alt="Logo KovaMarket">
         <div>
             <h1>Reporte de Cuadre</h1>
-            <p style="margin: 0;"><strong>Fecha:</strong> {{ cuadre.fecha }}</p>
-            <p style="margin: 0;"><strong>Generado por:</strong> {{ request.user.username }}</p>
-            <p style="margin: 0;"><strong>Responsable del cuadre:</strong> {{ cuadre.usuario.username }}</p>
-            <p style="margin: 0;"><strong>Generado en:</strong> {{ ahora|date:"d/m/Y H:i" }}</p>
+            <p><strong>Fecha:</strong> {{ cuadre.fecha }}</p>
+            <p><strong>Generado por:</strong> {{ request.user.username }}</p>
+            <p><strong>Responsable del cuadre:</strong> {{ cuadre.usuario.username }}</p>
+            <p><strong>Generado en:</strong> {{ ahora|date:"d/m/Y H:i" }}</p>
         </div>
     </div>
 
-    <!-- Tabla con todos los datos del cuadre -->
+    <!-- Tabla del cuadre -->
     <table>
         <thead>
             <tr>
                 <th>Producto</th>
                 <th>Cantidad Inicial</th>
                 <th>Entradas</th>
-
-                <th>Gasto Cantidad </th>
-                <th>Gasto Precio</th>
-                <th>Gasto Importe</th>
-
-                <th>Transf. Cantidad</th>
-                <th>Transf. Precio</th>
-                <th>Transf. Importe</th>
-
-                <th>Efectivo Cantidad</th>
-                <th>Efectivo Precio</th>
-                <th>Efectivo Importe</th>
-
+                <th>Gasto (Cant / Precio / Importe)</th>
+                <th>Transferencia (Cant / Precio / Importe)</th>
+                <th>Efectivo (Cant / Precio / Importe)</th>
+                <th>Importe total</th>
                 <th>Cantidad Final</th>
-                <th>Importe Total</th>
             </tr>
         </thead>
         <tbody>
@@ -99,20 +122,12 @@
                 <td>{{ d.cantidad_inicial }}</td>
                 <td>{{ d.entradas }}</td>
 
-                <td>{{ d.cantidad_gasto }}</td>
-                <td>${{ d.precio_unitario_gasto|floatformat:2 }}</td>
-                <td>${{ d.importe_gasto|floatformat:2 }}</td>
+                <td>{{ d.cantidad_gasto }} / ${{ d.precio_unitario_gasto|floatformat:2 }} / ${{ d.importe_gasto|floatformat:2 }}</td>
+                <td>{{ d.cantidad_transferencia }} / ${{ d.precio_unitario_transferencia|floatformat:2 }} / ${{ d.importe_transferencia|floatformat:2 }}</td>
+                <td>{{ d.cantidad_efectivo }} / ${{ d.precio_unitario_efectivo|floatformat:2 }} / ${{ d.importe_efectivo|floatformat:2 }}</td>
 
-                <td>{{ d.cantidad_transferencia }}</td>
-                <td>${{ d.precio_unitario_transferencia|floatformat:2 }}</td>
-                <td>${{ d.importe_transferencia|floatformat:2 }}</td>
-
-                <td>{{ d.cantidad_efectivo }}</td>
-                <td>${{ d.precio_unitario_efectivo|floatformat:2 }}</td>
-                <td>${{ d.importe_efectivo|floatformat:2 }}</td>
-
-                <td>{{ d.cantidad_final }}</td>
-                <td><strong>${{ d.importe_total_producto|floatformat:2 }}</strong></td>
+                <td class="fw-bold">${{ d.importe_total_producto|floatformat:2 }}</td>
+                <td class="fw-bold">{{ d.cantidad_final }}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -20,6 +20,8 @@ from decimal import Decimal
 from datetime import datetime
 from django.db.models import Sum
 from functools import wraps
+from django.db.models import F
+
 
 
  
@@ -403,7 +405,9 @@ def filtrar_ventas_por_filtro(filtro, valor, user):
     return ventas.order_by('-fecha')
     
 
-# Vista para la nueva venta 
+# Vista para la nueva venta
+@login_required
+@permiso_dependiente_o_superusuario
 @login_required
 @permiso_dependiente_o_superusuario
 def nueva_venta(request):
@@ -437,11 +441,11 @@ def nueva_venta(request):
             codigo_transferencia = venta_form.cleaned_data.get("codigo_transferencia")
             motivo_gasto = venta_form.cleaned_data.get("motivo_gasto")
 
-            # Total a pagar según forma de pago (gasto se trata como transferencia)
+            # Total a pagar según forma de pago
             if forma_pago == "efectivo":
                 total_a_pagar = precio_total_efectivo
             else:
-                total_a_pagar = precio_total  # incluye gasto y transferencia
+                total_a_pagar = precio_total
 
             # Crear la venta
             venta = Venta.objects.create(
@@ -453,7 +457,7 @@ def nueva_venta(request):
                 motivo_gasto=motivo_gasto if forma_pago == "gasto" else None
             )
 
-            # Crear los ítems y descontar del stock
+            # Crear los ítems y descontar stock con F()
             for item in items_actuales:
                 VentaItem.objects.create(
                     venta=venta,
@@ -462,8 +466,9 @@ def nueva_venta(request):
                     precio_unitario=item.producto.precio,
                     precio_unitario_efectivo=item.producto.precio_efectivo
                 )
-                item.producto.cantidad -= item.cantidad
-                item.producto.save()
+                Producto.objects.filter(id=item.producto.id).update(
+                    cantidad=F('cantidad') - item.cantidad
+                )
 
             # Limpiar venta temporal
             venta_temp.delete()
@@ -483,6 +488,111 @@ def nueva_venta(request):
     }
     return render(request, "nueva_venta.html", context)
 
+# def nueva_venta(request):
+#     # Obtener o crear una venta temporal por usuario
+#     venta_temp, _ = VentaTemporal.objects.get_or_create(dependienta=request.user)
+#     items_actuales = venta_temp.items.select_related("producto")
+
+#     # Total con precio normal y efectivo
+#     precio_total = sum(item.producto.precio * item.cantidad for item in items_actuales)
+#     precio_total_efectivo = sum(item.producto.precio_efectivo * item.cantidad for item in items_actuales)
+
+#     # Subtotal por ítem en efectivo
+#     for item in items_actuales:
+#         item.subtotal_efectivo = item.producto.precio_efectivo * item.cantidad
+
+#     # Buscar productos
+#     consulta = request.GET.get('buscar', '')
+#     productos_disponibles = Producto.objects.filter(disponibilidad=True, deshabilitado=False)
+#     if consulta:
+#         productos_disponibles = productos_disponibles.filter(nombre__icontains=consulta)
+
+#     # Paginación
+#     paginator = Paginator(productos_disponibles, 20)
+#     page_number = request.GET.get("page")
+#     page_obj = paginator.get_page(page_number)
+
+#     if request.method == "POST":
+#         venta_form = VentaForm(request.POST)
+#         if venta_form.is_valid():
+#             forma_pago = venta_form.cleaned_data["forma_pago"]
+#             codigo_transferencia = venta_form.cleaned_data.get("codigo_transferencia")
+#             motivo_gasto = venta_form.cleaned_data.get("motivo_gasto")
+
+#             # Total a pagar según forma de pago (gasto se trata como transferencia)
+#             if forma_pago == "efectivo":
+#                 total_a_pagar = precio_total_efectivo
+#             else:
+#                 total_a_pagar = precio_total  # incluye gasto y transferencia
+
+#             # Crear la venta
+#             venta = Venta.objects.create(
+#                 dependienta=request.user,
+#                 fecha=timezone.now(),
+#                 forma_pago=forma_pago,
+#                 codigo_transferencia=codigo_transferencia,
+#                 total_a_pagar=total_a_pagar,
+#                 motivo_gasto=motivo_gasto if forma_pago == "gasto" else None
+#             )
+
+#             # Crear los ítems y descontar del stock
+#             for item in items_actuales:
+#                 VentaItem.objects.create(
+#                     venta=venta,
+#                     producto=item.producto,
+#                     cantidad=item.cantidad,
+#                     precio_unitario=item.producto.precio,
+#                     precio_unitario_efectivo=item.producto.precio_efectivo
+#                 )
+#                 item.producto.cantidad -= item.cantidad
+#                 item.producto.save()
+
+#             # Limpiar venta temporal
+#             venta_temp.delete()
+#             messages.success(request, "✅ Venta registrada correctamente.")
+#             return redirect("gestionar_venta")
+#     else:
+#         venta_form = VentaForm()
+
+#     context = {
+#         "usuario": request.user,
+#         "productos": page_obj,
+#         "items": items_actuales,
+#         "precio_total": precio_total,
+#         "precio_total_efectivo": precio_total_efectivo,
+#         "venta_form": venta_form,
+#         "buscar": consulta
+#     }
+#     return render(request, "nueva_venta.html", context)
+
+
+
+# # Vista para agregar producto AJAX
+# @login_required
+# @permiso_dependiente_o_superusuario
+# def agregar_producto_ajax(request, producto_id):
+#     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
+#         cantidad = int(request.POST.get("cantidad", 1))
+#         producto = get_object_or_404(Producto, id=producto_id)
+#         venta_temp, _ = VentaTemporal.objects.get_or_create(dependienta=request.user)
+
+#         if cantidad > producto.cantidad:
+#             return JsonResponse({"success": False, "mensaje": "No hay suficiente stock."})
+
+#         item, created = VentaTemporalItem.objects.get_or_create(
+#             venta_temporal=venta_temp,
+#             producto=producto
+#         )
+#         item.cantidad += cantidad
+#         item.save()
+
+#         return JsonResponse({
+#             "success": True,
+#             "mensaje": f"{cantidad} unidades de '{producto.nombre}' añadidas.",
+#             "nueva_cantidad": item.cantidad
+#         })
+#     return JsonResponse({"success": False, "mensaje": "Solicitud inválida."})
+
 
 
 # Vista para agregar un producto (evita doble procesamiento)
@@ -490,22 +600,52 @@ def nueva_venta(request):
 @permiso_dependiente_o_superusuario
 def agregar_producto_venta(request, producto_id):
     if request.method == "POST":
+        cantidad_deseada = int(request.POST.get("cantidad", 1))
+
+        if cantidad_deseada < 1:
+            messages.warning(request, "La cantidad debe ser al menos 1.")
+            return redirect("nueva_venta")
+
         venta_temp, _ = VentaTemporal.objects.get_or_create(dependienta=request.user)
         producto = get_object_or_404(Producto, id=producto_id)
+
+        if cantidad_deseada > producto.cantidad:
+            messages.warning(request, f"No hay suficiente stock para '{producto.nombre}'.")
+            return redirect("nueva_venta")
 
         item, created = VentaTemporalItem.objects.get_or_create(
             venta_temporal=venta_temp,
             producto=producto
         )
 
-        if item.cantidad + 1 > producto.cantidad:
-            messages.warning(request, f"No hay más stock disponible para '{producto.nombre}'.")
+        nueva_cantidad = item.cantidad + cantidad_deseada
+        if nueva_cantidad > producto.cantidad:
+            messages.warning(request, f"Solo quedan {producto.cantidad - item.cantidad} unidades disponibles de '{producto.nombre}'.")
         else:
-            item.cantidad += 1
+            item.cantidad = nueva_cantidad
             item.save()
-            messages.success(request, f"Producto '{producto.nombre}' añadido a la venta.")
+            messages.success(request, f"Se añadieron {cantidad_deseada} unidad(es) de '{producto.nombre}' a la venta.")
 
     return redirect("nueva_venta")
+
+# def agregar_producto_venta(request, producto_id):
+#     if request.method == "POST":
+#         venta_temp, _ = VentaTemporal.objects.get_or_create(dependienta=request.user)
+#         producto = get_object_or_404(Producto, id=producto_id)
+
+#         item, created = VentaTemporalItem.objects.get_or_create(
+#             venta_temporal=venta_temp,
+#             producto=producto
+#         )
+
+#         if item.cantidad + 1 > producto.cantidad:
+#             messages.warning(request, f"No hay más stock disponible para '{producto.nombre}'.")
+#         else:
+#             item.cantidad += 1
+#             item.save()
+#             messages.success(request, f"Producto '{producto.nombre}' añadido a la venta.")
+
+#     return redirect("nueva_venta")
 
 
 

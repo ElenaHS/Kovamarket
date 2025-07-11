@@ -33,6 +33,7 @@ from .views import (
     generar_cuadre,
     listar_cuadre,
     generar_pdf_reporte_cuadre,
+   
     
 )
 
@@ -71,7 +72,8 @@ urlpatterns = [
     path('cuadre/generar/', generar_cuadre, name='generar_cuadre'),
     path('cuadre/', listar_cuadre, name='listar_cuadre'),
     path('cuadre/<int:cuadre_id>/reporte/', generar_pdf_reporte_cuadre, name='reporte_cuadre_pdf'),
-    
+    # path("venta/agregar-ajax/<int:producto_id>/", agregar_producto_ajax, name="agregar_producto_ajax"),
+
    
     # path('gastos/nuevo/', nuevo_gasto, name='nuevo_gasto'),
     

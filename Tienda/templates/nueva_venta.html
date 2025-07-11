@@ -48,11 +48,13 @@
                     <td class="fw-bold text-kova">${{ producto.precio }}</td>
                     <td class="fw-bold text-danger">${{ producto.precio_efectivo }} <small>(efectivo)</small></td>
                     <td>
-                        <form method="post" action="{% url 'agregar_producto_venta' producto.id %}" onsubmit="this.querySelector('button').disabled = true;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-kova btn-sm">Agregar</button>
-                        </form>
-                    </td>
+    <form method="post" action="{% url 'agregar_producto_venta' producto.id %}" class="d-flex align-items-center gap-1" style="justify-content: center;" onsubmit="this.querySelector('button').disabled = true;">
+        {% csrf_token %}
+        <input type="number" name="cantidad" value="1" min="1" max="{{ producto.cantidad }}" class="form-control form-control-sm text-center" style="width: 60px;" required>
+        <button type="submit" class="btn btn-kova btn-sm">Agregar</button>
+    </form>
+</td>
+
                 </tr>
                 {% empty %}
                 <tr>
