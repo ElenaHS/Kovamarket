@@ -563,67 +563,70 @@ def cancelar_venta(request):
 @login_required
 @permiso_dependiente_o_superusuario
 def generar_cuadre(request):
-    hoy = timezone.now().date()
+    try:
+        hoy = timezone.now().date()
 
-    productos = Producto.objects.all()
-    cuadre = Cuadre.objects.create(fecha=hoy, usuario=request.user)
+        productos = Producto.objects.all()
+        cuadre = Cuadre.objects.create(fecha=hoy, usuario=request.user)
 
-    for producto in productos:
-        entradas_dia = Entrada.objects.filter(producto=producto, fecha_entrada__date=hoy)
-        total_entradas = entradas_dia.aggregate(total=Sum("nueva_cantidad"))["total"] or 0
+        for producto in productos:
+            entradas_dia = Entrada.objects.filter(producto=producto, fecha_entrada__date=hoy)
+            total_entradas = entradas_dia.aggregate(total=Sum("nueva_cantidad"))["total"] or 0
 
-        ventas_dia = Venta.objects.filter(fecha__date=hoy)
-        items_producto = VentaItem.objects.filter(venta__in=ventas_dia, producto=producto)
+            ventas_dia = Venta.objects.filter(fecha__date=hoy)
+            items_producto = VentaItem.objects.filter(venta__in=ventas_dia, producto=producto)
 
-        cantidad_gasto = items_producto.filter(venta__forma_pago="gasto").aggregate(
-            total=Sum("cantidad")
-        )["total"] or 0
-        precio_gasto = producto.precio
-        importe_gasto = cantidad_gasto * precio_gasto
+            cantidad_gasto = items_producto.filter(venta__forma_pago="gasto").aggregate(
+                total=Sum("cantidad")
+            )["total"] or 0
+            precio_gasto = producto.precio
+            importe_gasto = cantidad_gasto * precio_gasto
 
-        cantidad_transferencia = items_producto.filter(venta__forma_pago="transferencia").aggregate(
-            total=Sum("cantidad")
-        )["total"] or 0
-        precio_transferencia = producto.precio
-        importe_transferencia = cantidad_transferencia * precio_transferencia
+            cantidad_transferencia = items_producto.filter(venta__forma_pago="transferencia").aggregate(
+                total=Sum("cantidad")
+            )["total"] or 0
+            precio_transferencia = producto.precio
+            importe_transferencia = cantidad_transferencia * precio_transferencia
 
-        cantidad_efectivo = items_producto.filter(venta__forma_pago="efectivo").aggregate(
-            total=Sum("cantidad")
-        )["total"] or 0
-        precio_efectivo = producto.precio_efectivo
-        importe_efectivo = cantidad_efectivo * precio_efectivo
+            cantidad_efectivo = items_producto.filter(venta__forma_pago="efectivo").aggregate(
+                total=Sum("cantidad")
+            )["total"] or 0
+            precio_efectivo = producto.precio_efectivo
+            importe_efectivo = cantidad_efectivo * precio_efectivo
 
-        importe_total_producto = importe_transferencia + importe_efectivo
+            importe_total_producto = importe_transferencia + importe_efectivo
 
-        total_vendido = cantidad_gasto + cantidad_transferencia + cantidad_efectivo
-        cantidad_inicial = producto.cantidad + total_vendido - total_entradas
-        cantidad_final = producto.cantidad
+            total_vendido = cantidad_gasto + cantidad_transferencia + cantidad_efectivo
+            cantidad_inicial = producto.cantidad + total_vendido - total_entradas
+            cantidad_final = producto.cantidad
 
-        # Opcional: prints de depuración
-        print(f"Producto: {producto.nombre}")
-        print(f"  Entradas: {total_entradas}")
-        print(f"  Vendido: {total_vendido}")
-        print(f"  Final: {cantidad_final}")
+            # Opcional: prints de depuración
+            print(f"Producto: {producto.nombre}")
+            print(f"  Entradas: {total_entradas}")
+            print(f"  Vendido: {total_vendido}")
+            print(f"  Final: {cantidad_final}")
 
-        CuadreDetalle.objects.create(
-            cuadre=cuadre,
-            producto=producto,
-            cantidad_inicial=cantidad_inicial,
-            entradas=total_entradas,
-            cantidad_gasto=cantidad_gasto,
-            precio_unitario_gasto=precio_gasto,
-            importe_gasto=importe_gasto,
-            cantidad_transferencia=cantidad_transferencia,
-            precio_unitario_transferencia=precio_transferencia,
-            importe_transferencia=importe_transferencia,
-            cantidad_efectivo=cantidad_efectivo,
-            precio_unitario_efectivo=precio_efectivo,
-            importe_efectivo=importe_efectivo,
-            importe_total_producto=importe_total_producto,
-            cantidad_final=cantidad_final,
-        )
+            CuadreDetalle.objects.create(
+                cuadre=cuadre,
+                producto=producto,
+                cantidad_inicial=cantidad_inicial,
+                entradas=total_entradas,
+                cantidad_gasto=cantidad_gasto,
+                precio_unitario_gasto=precio_gasto,
+                importe_gasto=importe_gasto,
+                cantidad_transferencia=cantidad_transferencia,
+                precio_unitario_transferencia=precio_transferencia,
+                importe_transferencia=importe_transferencia,
+                cantidad_efectivo=cantidad_efectivo,
+                precio_unitario_efectivo=precio_efectivo,
+                importe_efectivo=importe_efectivo,
+                importe_total_producto=importe_total_producto,
+                cantidad_final=cantidad_final,
+            )
 
-    messages.success(request, f"✅ Cuadre generado exitosamente para el día {hoy}.")
+        messages.success(request, f"✅ Cuadre generado exitosamente para el día {hoy}.")
+    except Exception as e:
+        return print(f"Error al generar cuadre: {e}")
     return redirect("detalle_cuadre", cuadre.id)
 
 
