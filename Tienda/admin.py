@@ -250,8 +250,8 @@ class CuadreAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False  # Para que no se editen desde el admin
 
-    def has_delete_permission(self, request, obj=None):
-        return False  # Opcional: evitar eliminación desde admin
+    # def has_delete_permission(self, request, obj=None):
+    #     return False  # Opcional: evitar eliminación desde admin
 
 
 
