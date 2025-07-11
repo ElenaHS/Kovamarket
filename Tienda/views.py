@@ -597,7 +597,8 @@ def generar_cuadre(request):
             importe_total_producto = importe_transferencia + importe_efectivo
 
             total_vendido = cantidad_gasto + cantidad_transferencia + cantidad_efectivo
-            cantidad_inicial = producto.cantidad + total_vendido - total_entradas
+            cantidad_inicial = max(producto.cantidad + total_vendido - total_entradas, producto.cantidad)
+            
             cantidad_final = producto.cantidad
 
             # Opcional: prints de depuración
