@@ -70,9 +70,9 @@ class ProductoAdmin(admin.ModelAdmin):
             return campos_base + campos_extra
         return campos_base
 
-    def has_delete_permission(self, request, obj=None):
-        # ❌ No permitir eliminación de productos
-        return False
+    # def has_delete_permission(self, request, obj=None):
+    #     # ❌ No permitir eliminación de productos
+    #     return False
 
     def imagen_preview(self, obj):
         if obj.imagen_url:
@@ -117,8 +117,8 @@ class EntradaAdmin(admin.ModelAdmin):
             form.base_fields['producto'].queryset = Producto.objects.filter(deshabilitado=False)
         return form
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+    # def has_delete_permission(self, request, obj=None):
+    #     return False
 
     def render_change_form(self, request, context, *args, **kwargs):
         if 'adminform' in context and 'producto' in context['adminform'].form.fields:
