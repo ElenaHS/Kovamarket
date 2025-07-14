@@ -9,7 +9,7 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate, login as auth_login
-from .forms import RegistroForm,  LoginForm
+from .forms import RegistroForm,  LoginForm, EntradaForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.forms import modelformset_factory
 from django.utils import timezone
@@ -707,6 +707,72 @@ def cancelar_venta(request):
     return redirect("gestionar_venta")
 
 
+
+
+# Vista para realizar una nueva entrada de un producto
+@login_required
+@permiso_dependiente_o_superusuario
+def nueva_entrada(request):
+    productos = Producto.objects.filter(deshabilitado=False)
+    producto_id = request.GET.get('producto')
+    producto_seleccionado = None
+    form = None
+
+    if producto_id:
+        producto_seleccionado = get_object_or_404(Producto, id=producto_id)
+        ultima_entrada = Entrada.objects.filter(producto=producto_seleccionado).order_by('-fecha_entrada').first()
+
+        if request.method == 'POST':
+            form = EntradaForm(request.POST)
+            if form.is_valid():
+                entrada = form.save(commit=False)
+                # Forzamos asignar el producto seleccionado
+                entrada.producto = producto_seleccionado
+                entrada.save()
+                messages.success(request, "Entrada registrada correctamente.")
+                return redirect('nueva_entrada')
+        else:
+            # Preparamos datos iniciales con la última entrada (excepto cantidad)
+            if ultima_entrada:
+                initial_data = {
+                    "precio_costo": ultima_entrada.precio_costo,
+                    "precio_venta": ultima_entrada.precio_venta,
+                    "precio_venta_efectivo": ultima_entrada.precio_venta_efectivo,
+                    "nuevo_codigo": ultima_entrada.nuevo_codigo,
+                    "nueva_fecha_vencimiento": ultima_entrada.nueva_fecha_vencimiento,
+                    "nueva_cantidad": None,  # vacía para que ingreses cantidad nueva
+                }
+                form = EntradaForm(initial=initial_data)
+            else:
+                form = EntradaForm()
+
+    else:
+        # Si no hay producto seleccionado, formulario vacío
+        form = EntradaForm()
+    
+    context = {
+        "productos": productos,
+        "form": form,
+        "producto_seleccionado": producto_seleccionado,
+    }
+    return render(request, "nueva_entrada.html", context)
+
+
+
+# Vista para listar las entradas
+@login_required
+@permiso_dependiente_o_superusuario
+def listar_entrada(request):
+    entradas_lista = Entrada.objects.select_related('producto').order_by('-fecha_entrada')
+    
+    paginator = Paginator(entradas_lista, 20)  # 20 entradas por página
+    page_number = request.GET.get('page')
+    entradas = paginator.get_page(page_number)
+
+    context = {
+        "entradas": entradas,
+    }
+    return render(request, "listar_entrada.html", context)
 
 
 

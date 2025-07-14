@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from .models import Venta, VentaItem, Producto
+from .models import Venta, VentaItem, Producto, Entrada
 
 
 # Formulario de Resgistro
@@ -181,6 +181,24 @@ class VentaItemForm(forms.ModelForm):
         super(VentaItemForm, self).__init__(*args, **kwargs)
         self.fields['producto'].label = "Producto"
         self.fields['cantidad'].label = "Cantidad"
+        
+        
+        
+        
+# Formulario para nueva entrada 
+from django import forms
+
+class EntradaForm(forms.ModelForm):
+    class Meta:
+        model = Entrada
+        fields = [
+            "precio_costo",
+            "precio_venta",
+            "precio_venta_efectivo",
+            "nueva_cantidad",
+            "nuevo_codigo",
+            "nueva_fecha_vencimiento",
+        ]
 
 
 

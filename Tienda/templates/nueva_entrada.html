@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Registrar nueva entrada{% endblock %}
+
+{% block content %}
+<div class="container-fluid vh-100 d-flex justify-content-center align-items-center">
+  <div class="col-11 col-sm-10 col-md-10 col-lg-8 col-xl-7">
+    <div class="card shadow-lg p-4 custom-card-width">
+
+      <h5 class="text-center mb-4">Registrar nueva entrada</h5>
+
+      <!-- Selector de producto -->
+      <form method="get" class="mb-4">
+        <label for="producto-select" class="form-label">Producto:</label>
+        <select id="producto-select" name="producto" class="form-select" onchange="this.form.submit()">
+          <option value="">Seleccione un producto</option>
+          {% for p in productos %}
+            <option value="{{ p.id }}" {% if producto_seleccionado and p.id == producto_seleccionado.id %}selected{% endif %}>
+              {{ p.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+
+      <!-- Formulario de entrada -->
+      {% if form %}
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <!-- Producto seleccionado (readonly) -->
+          <div class="mb-3">
+            <label class="form-label">Producto seleccionado:</label>
+            <input type="text" class="form-control" value="{{ producto_seleccionado.nombre }}" readonly>
+          </div>
+
+          <!-- Primera fila de 3 columnas -->
+          <div class="row mb-3">
+            <div class="col-md-4">
+              {{ form.precio_costo.label_tag }}
+              {{ form.precio_costo }}
+              {% if form.precio_costo.errors %}
+                <div class="text-danger small">{{ form.precio_costo.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-4">
+              {{ form.precio_venta.label_tag }}
+              {{ form.precio_venta }}
+              {% if form.precio_venta.errors %}
+                <div class="text-danger small">{{ form.precio_venta.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-4">
+              {{ form.precio_venta_efectivo.label_tag }}
+              {{ form.precio_venta_efectivo }}
+              {% if form.precio_venta_efectivo.errors %}
+                <div class="text-danger small">{{ form.precio_venta_efectivo.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Segunda fila de 3 columnas -->
+          <div class="row mb-3">
+            <div class="col-md-4">
+              {{ form.nueva_cantidad.label_tag }}
+              {{ form.nueva_cantidad }}
+              {% if form.nueva_cantidad.errors %}
+                <div class="text-danger small">{{ form.nueva_cantidad.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-4">
+              {{ form.nuevo_codigo.label_tag }}
+              {{ form.nuevo_codigo }}
+              {% if form.nuevo_codigo.errors %}
+                <div class="text-danger small">{{ form.nuevo_codigo.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-4">
+              {{ form.nueva_fecha_vencimiento.label_tag }}
+              {{ form.nueva_fecha_vencimiento }}
+              {% if form.nueva_fecha_vencimiento.errors %}
+                <div class="text-danger small">{{ form.nueva_fecha_vencimiento.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Botón de registrar -->
+          <div class="d-grid mt-3">
+            <button type="submit" class="btn btn-kova">Registrar entrada</button>
+          </div>
+        </form>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<style>
+/* Botón principal */
+.btn-kova {
+  background-color: #fc7319;
+  color: white;
+  border: 1px solid #fc7319;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-kova:hover {
+  background-color: #e36512;
+  border-color: #e36512;
+  color: white;
+}
+
+/* Ancho personalizado para la tarjeta */
+.custom-card-width {
+  max-width: 950px;
+  margin: auto;
+}
+</style>
+{% endblock %}

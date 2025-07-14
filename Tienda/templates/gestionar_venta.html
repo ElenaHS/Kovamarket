@@ -13,12 +13,15 @@
     </div>
 
 
-    <!-- Botón para ir al listado de cuadres -->
+    {% comment %} <!-- Botón para ir al listado de cuadres -->
     <div class="mb-3 text-end">
         <a href="{% url 'listar_cuadre' %}" class="btn btn-warning">
             Cuadres
         </a>
-    </div>
+    </div> {% endcomment %}
+
+
+   
 
     <!-- Formulario para generar reporte -->
     <form method="get" action="{% url 'generar_reporte_pdf' %}" class="card p-3 shadow-sm mb-4 border-light">

@@ -204,8 +204,23 @@
 
                 <!-- Enlace a Gestion de ventas -->
                 <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/ventas/' %}active{% endif %}" href="{% url 'gestionar_venta' %}">Gestión de ventas</a>
+                    <a class="nav-link {% if request.path == '/ventas/' %}active{% endif %}" href="{% url 'gestionar_venta' %}">Ventas</a>
                 </li>
+
+                <!-- Enlace a Gestion de cuadres -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/cuadre/' %}active{% endif %}" href="{% url 'listar_cuadre' %}">Cuadres</a>
+                </li>
+
+                <!-- Enlace a Gestion de entradas -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/entradas/' %}active{% endif %}" href="{% url 'listar_entrada' %}">Entradas</a>
+                </li>
+
+                 {% comment %} <!-- Enlace a Gestion de salidas -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/ventas/' %}active{% endif %}" href="#">Salidas</a>
+                </li> {% endcomment %}
 
                 <!-- Acceso y sesión -->
                 {% if user.is_authenticated %}

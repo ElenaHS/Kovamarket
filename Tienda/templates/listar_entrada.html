@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Listado de Entradas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Mensajes -->
+    {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Botón para nueva entrada -->
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{% url 'nueva_entrada' %}" class="btn btn-kova shadow-sm">
+            <i class="fas fa-plus-circle me-2"></i> Nueva Entrada de Producto
+        </a>
+    </div>
+
+    <!-- Tabla de entradas -->
+    {% if entradas %}
+        <div class="table-responsive mb-4 shadow-sm rounded overflow-hidden">
+            <table class="table table-hover align-middle text-center tabla-productos-pequena">
+                <thead class="table-light text-uppercase text-secondary">
+                    <tr>
+                        <th>Producto</th>
+                        <th>Código</th>
+                        <th>Fecha vencimiento</th>
+                        <th>Precio costo</th>
+                        <th>Precio venta</th>
+                        <th>Precio venta efectivo</th>
+                        <th>Cantidad</th>
+                        <th>Fecha entrada</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entrada in entradas %}
+                        <tr>
+                            <td>{{ entrada.producto.nombre }}</td>
+                            <td>{{ entrada.nuevo_codigo }}</td>
+                            <td>
+                                {% if entrada.nueva_fecha_vencimiento %}
+                                    {{ entrada.nueva_fecha_vencimiento|date:"d/m/Y" }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>${{ entrada.precio_costo|floatformat:2 }}</td>
+                            <td>${{ entrada.precio_venta|floatformat:2 }}</td>
+                            <td class="text-danger">${{ entrada.precio_venta_efectivo|floatformat:2 }}</td>
+                            <td>{{ entrada.nueva_cantidad }}</td>
+                            <td>{{ entrada.fecha_entrada|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="d-flex justify-content-center mb-4">
+            <nav>
+                <ul class="pagination">
+                    {% if entradas.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ entradas.previous_page_number }}">&laquo;</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                    {% endif %}
+
+                    {% for num in entradas.paginator.page_range %}
+                        <li class="page-item {% if entradas.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if entradas.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ entradas.next_page_number }}">&raquo;</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+
+    {% else %}
+        <div class="alert alert-info text-center">
+            No hay entradas registradas aún.
+        </div>
+    {% endif %}
+</div>
+
+<!-- Estilos adaptados -->
+<style>
+    .btn-kova {
+        background-color: #fc7319;
+        color: white;
+        border: 1px solid #fc7319;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .btn-kova:hover {
+        background-color: #e36512;
+        border-color: #e36512;
+        color: white;
+    }
+    .text-kova {
+        color: #fc7319;
+    }
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .tabla-productos-pequena {
+        font-size: 14px !important;
+    }
+    .tabla-productos-pequena th,
+    .tabla-productos-pequena td {
+        padding: 6px 8px !important;
+    }
+</style>
+{% endblock %}
