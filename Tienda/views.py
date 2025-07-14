@@ -22,6 +22,7 @@ from django.db.models import Sum
 from functools import wraps
 from django.db.models import F
 from django.db import transaction, IntegrityError
+from collections import defaultdict
 
 
 
@@ -713,49 +714,50 @@ def cancelar_venta(request):
 @login_required
 @permiso_dependiente_o_superusuario
 def generar_cuadre(request):
+    hoy = timezone.now().date()
     try:
-        hoy = timezone.now().date()
         with transaction.atomic():
             productos = Producto.objects.all()
             cuadre = Cuadre.objects.create(fecha=hoy, usuario=request.user)
 
+            # Precarga todos los datos necesarios
+            entradas = Entrada.objects.filter(fecha_entrada__date=hoy).values('producto_id').annotate(total=Sum('nueva_cantidad'))
+            ventas_dia = Venta.objects.filter(fecha__date=hoy)
+            items_dia = VentaItem.objects.filter(venta__in=ventas_dia).select_related('producto', 'venta')
+
+            # Mapear las entradas por producto
+            entradas_map = {e['producto_id']: e['total'] for e in entradas}
+
+            # Agrupar ventas por producto y forma de pago
+            resumen = defaultdict(lambda: {
+                'gasto': 0,
+                'transferencia': 0,
+                'efectivo': 0
+            })
+
+            for item in items_dia:
+                forma_pago = item.venta.forma_pago
+                resumen[item.producto_id][forma_pago] += item.cantidad
+
             for producto in productos:
-                entradas_dia = Entrada.objects.filter(producto=producto, fecha_entrada__date=hoy)
-                total_entradas = entradas_dia.aggregate(total=Sum("nueva_cantidad"))["total"] or 0
+                pid = producto.id
+                cantidad_gasto = resumen[pid]['gasto']
+                cantidad_transferencia = resumen[pid]['transferencia']
+                cantidad_efectivo = resumen[pid]['efectivo']
 
-                ventas_dia = Venta.objects.filter(fecha__date=hoy)
-                items_producto = VentaItem.objects.filter(venta__in=ventas_dia, producto=producto)
-
-                cantidad_gasto = items_producto.filter(venta__forma_pago="gasto").aggregate(
-                    total=Sum("cantidad")
-                )["total"] or 0
                 precio_gasto = producto.precio
-                importe_gasto = cantidad_gasto * precio_gasto
-
-                cantidad_transferencia = items_producto.filter(venta__forma_pago="transferencia").aggregate(
-                    total=Sum("cantidad")
-                )["total"] or 0
                 precio_transferencia = producto.precio
-                importe_transferencia = cantidad_transferencia * precio_transferencia
-
-                cantidad_efectivo = items_producto.filter(venta__forma_pago="efectivo").aggregate(
-                    total=Sum("cantidad")
-                )["total"] or 0
                 precio_efectivo = producto.precio_efectivo
+
+                importe_gasto = cantidad_gasto * precio_gasto
+                importe_transferencia = cantidad_transferencia * precio_transferencia
                 importe_efectivo = cantidad_efectivo * precio_efectivo
 
                 importe_total_producto = importe_transferencia + importe_efectivo
-
                 total_vendido = cantidad_gasto + cantidad_transferencia + cantidad_efectivo
+                total_entradas = entradas_map.get(pid, 0)
                 cantidad_inicial = max(producto.cantidad + total_vendido - total_entradas, 0)
-
                 cantidad_final = producto.cantidad
-
-                # Puedes dejar los prints o comentarlos para debugging
-                print(f"Producto: {producto.nombre}")
-                print(f"  Entradas: {total_entradas}")
-                print(f"  Vendido: {total_vendido}")
-                print(f"  Final: {cantidad_final}")
 
                 CuadreDetalle.objects.create(
                     cuadre=cuadre,
@@ -774,12 +776,13 @@ def generar_cuadre(request):
                     importe_total_producto=importe_total_producto,
                     cantidad_final=cantidad_final,
                 )
+
         messages.success(request, f"✅ Cuadre generado exitosamente para el día {hoy}.")
         return redirect("detalle_cuadre", cuadre.id)
 
     except Exception as e:
-        messages.error(request, f"❌ Error al generar cuadre: {str(e)}")
-        return redirect("listar_cuadre")  # O a donde consideres que debe volver en error
+        messages.error(request, f"❌ Error al generar el cuadre: {str(e)}")
+        return redirect("listar_cuadres")
 
 
 
