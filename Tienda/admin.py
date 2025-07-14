@@ -100,7 +100,7 @@ class EntradaAdmin(admin.ModelAdmin):
     ]
     list_filter = ['producto', 'fecha_entrada', 'nueva_fecha_vencimiento']
     search_fields = ['producto__nombre', 'nuevo_codigo']
-    autocomplete_fields = ['producto']  # Puedes mantenerlo si quieres en modo creación
+    autocomplete_fields = ['producto']
     date_hierarchy = 'fecha_entrada'
     ordering = ['-fecha_entrada']
     save_on_top = True
@@ -119,6 +119,11 @@ class EntradaAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def has_change_permission(self, request, obj=None):
+        if obj is not None:
+            return False
+        return super().has_change_permission(request, obj)
 
     def render_change_form(self, request, context, *args, **kwargs):
         if 'adminform' in context and 'producto' in context['adminform'].form.fields:
@@ -202,12 +207,17 @@ class VentaAdmin(admin.ModelAdmin):
 # Admin de VentaItem (productos en cada venta)
 @admin.register(VentaItem)
 class VentaItemAdmin(admin.ModelAdmin):
-    list_display = ['venta', 'producto', 'cantidad']
+    list_display = ['venta', 'producto', 'cantidad', 'fecha_venta']
     search_fields = ['venta__id', 'producto__nombre']
     list_filter = ['producto']
     autocomplete_fields = ['venta', 'producto']
     save_on_top = True
 
+    def fecha_venta(self, obj):
+        return obj.venta.fecha
+
+    fecha_venta.admin_order_field = 'venta__fecha'
+    fecha_venta.short_description = 'Fecha de Venta'
 
 
 
@@ -255,8 +265,8 @@ class CuadreAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False  # Para que no se editen desde el admin
 
-    def has_delete_permission(self, request, obj=None):
-        return False  # Opcional: evitar eliminación desde admin
+    # def has_delete_permission(self, request, obj=None):
+    #     return False  # Opcional: evitar eliminación desde admin
 
 
 

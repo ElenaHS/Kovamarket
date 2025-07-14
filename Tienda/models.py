@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils.timezone import now
+from django.utils.timezone import localtime
 
 # Modelo de Categoría
 class Categoria(models.Model):
@@ -207,7 +208,8 @@ class Venta(models.Model):
     )
 
     def __str__(self):
-        return f"Venta #{self.id} - {self.dependienta.username} - {self.fecha.strftime('%Y-%m-%d %H:%M')}"
+        fecha_local = localtime(self.fecha)  # convierte a hora local
+        return f"Venta #{self.id} - {self.dependienta} - {fecha_local.strftime('%Y-%m-%d %H:%M')}"
 
     class Meta:
         ordering = ['-fecha']
