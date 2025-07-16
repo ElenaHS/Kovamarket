@@ -120,10 +120,10 @@ class EntradaAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    def has_change_permission(self, request, obj=None):
-        if obj is not None:
-            return False
-        return super().has_change_permission(request, obj)
+    # def has_change_permission(self, request, obj=None):
+    #     if obj is not None:
+    #         return False
+    #     return super().has_change_permission(request, obj)
 
     def render_change_form(self, request, context, *args, **kwargs):
         if 'adminform' in context and 'producto' in context['adminform'].form.fields:
