@@ -23,6 +23,7 @@ from functools import wraps
 from django.db.models import F
 from django.db import transaction, IntegrityError
 from collections import defaultdict
+from django.utils.timezone import localtime
 
 
 
@@ -452,7 +453,7 @@ def nueva_venta(request):
                     # Crear la venta
                     venta = Venta.objects.create(
                         dependienta=request.user,
-                        fecha=timezone.now(),
+                        fecha=timezone.localtime(),
                         forma_pago=forma_pago,
                         codigo_transferencia=codigo_transferencia,
                         total_a_pagar=total_a_pagar,
@@ -780,21 +781,18 @@ def listar_entrada(request):
 @login_required
 @permiso_dependiente_o_superusuario
 def generar_cuadre(request):
-    hoy = timezone.now().date()
+    hoy = localtime().date()  # Cambio aquí ✅
     try:
         with transaction.atomic():
             productos = Producto.objects.all()
             cuadre = Cuadre.objects.create(fecha=hoy, usuario=request.user)
 
-            # Precarga todos los datos necesarios
             entradas = Entrada.objects.filter(fecha_entrada__date=hoy).values('producto_id').annotate(total=Sum('nueva_cantidad'))
             ventas_dia = Venta.objects.filter(fecha__date=hoy)
             items_dia = VentaItem.objects.filter(venta__in=ventas_dia).select_related('producto', 'venta')
 
-            # Mapear las entradas por producto
             entradas_map = {e['producto_id']: e['total'] for e in entradas}
 
-            # Agrupar ventas por producto y forma de pago
             resumen = defaultdict(lambda: {
                 'gasto': 0,
                 'transferencia': 0,
@@ -802,8 +800,7 @@ def generar_cuadre(request):
             })
 
             for item in items_dia:
-                forma_pago = item.venta.forma_pago
-                resumen[item.producto_id][forma_pago] += item.cantidad
+                resumen[item.producto_id][item.venta.forma_pago] += item.cantidad
 
             for producto in productos:
                 pid = producto.id
