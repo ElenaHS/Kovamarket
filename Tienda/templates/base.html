@@ -217,10 +217,11 @@
                     <a class="nav-link {% if request.path == '/entradas/' %}active{% endif %}" href="{% url 'listar_entrada' %}">Entradas</a>
                 </li>
 
-                 {% comment %} <!-- Enlace a Gestion de salidas -->
-                <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/ventas/' %}active{% endif %}" href="#">Salidas</a>
-                </li> {% endcomment %}
+                 <!-- Enlace a Gestión de salidas -->
+<li class="nav-item">
+    <a class="nav-link {% if request.path == '/salida/listar/' %}active{% endif %}" href="{% url 'listar_salida' %}">Salidas</a>
+</li>
+
 
                 <!-- Acceso y sesión -->
                 {% if user.is_authenticated %}

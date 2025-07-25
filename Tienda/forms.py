@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from .models import Venta, VentaItem, Producto, Entrada
+from .models import Venta, VentaItem, Producto, Entrada, Salida
 
 
 # Formulario de Resgistro
@@ -199,6 +199,19 @@ class EntradaForm(forms.ModelForm):
             "nuevo_codigo",
             "nueva_fecha_vencimiento",
         ]
+        
+        
+        
+# Formulario para una nueva salida
+class SalidaForm(forms.ModelForm):
+    class Meta:
+        model = Salida
+        fields = ['producto', 'cantidad', 'motivo']
+        widgets = {
+            'producto': forms.Select(attrs={'class': 'form-control'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'motivo': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 
 

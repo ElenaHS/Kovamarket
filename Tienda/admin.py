@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categoria, Producto, Marca, Pregunta, Carrito, CarritoItem, Venta, VentaItem, Entrada, Cuadre, CuadreDetalle
+from .models import Categoria, Producto, Marca, Pregunta, Carrito, CarritoItem, Venta, VentaItem, Entrada, Cuadre, CuadreDetalle, Salida
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -137,6 +137,15 @@ class EntradaAdmin(admin.ModelAdmin):
         return super().render_change_form(request, context, *args, **kwargs)
 
 
+
+# Admin de salida de productos
+@admin.register(Salida)
+class SalidaAdmin(admin.ModelAdmin):
+    list_display = ('producto', 'cantidad', 'motivo', 'fecha_salida')
+    list_filter = ('motivo', 'fecha_salida')
+    search_fields = ('producto__nombre',)
+    date_hierarchy = 'fecha_salida'
+
     
 # Admin de Pregunta
 @admin.register(Pregunta)
@@ -224,13 +233,14 @@ class VentaItemAdmin(admin.ModelAdmin):
 
 
 
-class CuadreDetalleInline(admin.TabularInline):
+class CuadreDetalleInline(admin.TabularInline): 
     model = CuadreDetalle
     extra = 0
     readonly_fields = [
         'producto',
         'cantidad_inicial',
         'entradas',
+        'salidas',  # ✅ Nuevo campo agregado
         'cantidad_gasto',
         'precio_unitario_gasto',
         'importe_gasto',
@@ -245,10 +255,7 @@ class CuadreDetalleInline(admin.TabularInline):
     ]
     can_delete = False
     show_change_link = False
-    
-    
-    
-    
+
 
 @admin.register(Cuadre)
 class CuadreAdmin(admin.ModelAdmin):
@@ -263,10 +270,8 @@ class CuadreAdmin(admin.ModelAdmin):
         return False  # Para evitar que se creen desde el admin
 
     def has_change_permission(self, request, obj=None):
-        return False  # Para que no se editen desde el admin
+        return False  # Para evitar que se editen desde el admin
 
-    # def has_delete_permission(self, request, obj=None):
-    #     return False  # Opcional: evitar eliminación desde admin
 
 
 

@@ -83,8 +83,13 @@
         }
 
         .fw-bold {
-    font-weight: bold;
-}
+            font-weight: bold;
+        }
+
+        /* Nuevos estilos para columnas separadas */
+        .col-efectivo { background-color: #f0fff0; }
+        .col-transferencia { background-color: #f0f8ff; }
+        .col-gasto { background-color: #fff0f0; }
     </style>
 </head>
 <body>
@@ -101,18 +106,38 @@
         </div>
     </div>
 
-    <!-- Tabla del cuadre -->
+    <!-- Tabla del cuadre - Estructura mejorada -->
     <table>
         <thead>
             <tr>
-                <th>Producto</th>
-                <th>Cantidad Inicial</th>
-                <th>Entradas</th>
-                <th>Gasto (Cant / Precio / Importe)</th>
-                <th>Transferencia (Cant / Precio / Importe)</th>
-                <th>Efectivo (Cant / Precio / Importe)</th>
-                <th>Importe total</th>
-                <th>Cantidad Final</th>
+                <th rowspan="2">Producto</th>
+                <th rowspan="2">Cant. Inicial</th>
+                <th rowspan="2">Entradas</th>
+                <th rowspan="2">Salidas</th>
+                
+                <!-- Columnas agrupadas para cada tipo -->
+                <th colspan="3" class="col-gasto">Gastos</th>
+                <th colspan="3" class="col-transferencia">Transferencias</th>
+                <th colspan="3" class="col-efectivo">Efectivo</th>
+                
+                <th rowspan="2">Importe Total</th>
+                <th rowspan="2">Cant. Final</th>
+            </tr>
+            <tr>
+                <!-- Subcolumnas para Gastos -->
+                <th class="col-gasto">Cant.</th>
+                <th class="col-gasto">P. Unit.</th>
+                <th class="col-gasto">Total</th>
+                
+                <!-- Subcolumnas para Transferencias -->
+                <th class="col-transferencia">Cant.</th>
+                <th class="col-transferencia">P. Unit.</th>
+                <th class="col-transferencia">Total</th>
+                
+                <!-- Subcolumnas para Efectivo -->
+                <th class="col-efectivo">Cant.</th>
+                <th class="col-efectivo">P. Unit.</th>
+                <th class="col-efectivo">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -121,11 +146,23 @@
                 <td>{{ d.producto.nombre }}</td>
                 <td>{{ d.cantidad_inicial }}</td>
                 <td>{{ d.entradas }}</td>
-
-                <td>{{ d.cantidad_gasto }} / ${{ d.precio_unitario_gasto|floatformat:2 }} / ${{ d.importe_gasto|floatformat:2 }}</td>
-                <td>{{ d.cantidad_transferencia }} / ${{ d.precio_unitario_transferencia|floatformat:2 }} / ${{ d.importe_transferencia|floatformat:2 }}</td>
-                <td>{{ d.cantidad_efectivo }} / ${{ d.precio_unitario_efectivo|floatformat:2 }} / ${{ d.importe_efectivo|floatformat:2 }}</td>
-
+                <td>{{ d.salidas|default:0 }}</td>
+                
+                <!-- Gastos -->
+                <td class="col-gasto">{{ d.cantidad_gasto|default:"0" }}</td>
+                <td class="col-gasto">${{ d.precio_unitario_gasto|default:"0.00"|floatformat:2 }}</td>
+                <td class="col-gasto">${{ d.importe_gasto|default:"0.00"|floatformat:2 }}</td>
+                
+                <!-- Transferencias -->
+                <td class="col-transferencia">{{ d.cantidad_transferencia|default:"0" }}</td>
+                <td class="col-transferencia">${{ d.precio_unitario_transferencia|default:"0.00"|floatformat:2 }}</td>
+                <td class="col-transferencia">${{ d.importe_transferencia|default:"0.00"|floatformat:2 }}</td>
+                
+                <!-- Efectivo -->
+                <td class="col-efectivo">{{ d.cantidad_efectivo|default:"0" }}</td>
+                <td class="col-efectivo">${{ d.precio_unitario_efectivo|default:"0.00"|floatformat:2 }}</td>
+                <td class="col-efectivo">${{ d.importe_efectivo|default:"0.00"|floatformat:2 }}</td>
+                
                 <td class="fw-bold">${{ d.importe_total_producto|floatformat:2 }}</td>
                 <td class="fw-bold">{{ d.cantidad_final }}</td>
             </tr>

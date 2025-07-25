@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils.timezone import now
 from django.utils.timezone import localtime
+from django.db.models import F
 
 # Modelo de Categoría
 class Categoria(models.Model):
@@ -147,6 +148,37 @@ class Entrada(models.Model):
     def __str__(self):
         return f"Entrada de {self.nueva_cantidad} x {self.producto.nombre} ({self.fecha_entrada.date()})"
 
+
+
+# Modelo de salida
+class Salida(models.Model):
+    MOTIVOS_SALIDA = [
+        ('error_entrada', 'Error de entrada'),
+        ('ajuste_stock', 'Ajuste de stock'),
+    ]
+
+    producto = models.ForeignKey(Producto, related_name='salidas', on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    motivo = models.CharField(max_length=20, choices=MOTIVOS_SALIDA)
+    fecha_salida = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha_salida']
+
+    def save(self, *args, **kwargs):
+        es_nueva = self.pk is None
+        super().save(*args, **kwargs)
+        if es_nueva:
+            Producto.objects.filter(pk=self.producto.pk).update(
+                cantidad=F('cantidad') - self.cantidad
+            )
+
+    def __str__(self):
+        return f"Salida de {self.cantidad} x {self.producto.nombre} ({self.get_motivo_display()})"
+
+
+
+
 # Modelo de pregunta
 class Pregunta(models.Model):
     pregunta = models.CharField(max_length=500)  # Limitar a un máximo de 500 caracteres
@@ -271,11 +303,16 @@ class Cuadre(models.Model):
     def __str__(self):
         return f"Cuadre {self.fecha} - {self.usuario.username}"
 
+
+
+# Modelo de cuadre detalle
 class CuadreDetalle(models.Model):
     cuadre = models.ForeignKey(Cuadre, related_name='detalles', on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+
     cantidad_inicial = models.PositiveIntegerField()
     entradas = models.PositiveIntegerField(default=0)
+    salidas = models.PositiveIntegerField(default=0)  # ✅ NUEVO CAMPO
 
     cantidad_gasto = models.PositiveIntegerField(default=0)
     precio_unitario_gasto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -294,7 +331,6 @@ class CuadreDetalle(models.Model):
 
     def __str__(self):
         return f"{self.producto.nombre} - Cuadre {self.cuadre.fecha}"
-
 
 
 

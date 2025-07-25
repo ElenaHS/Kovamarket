@@ -35,6 +35,8 @@ from .views import (
     generar_pdf_reporte_cuadre,
     nueva_entrada,
     listar_entrada,
+    nueva_salida,
+    listar_salida,
    
     
 )
@@ -77,6 +79,9 @@ urlpatterns = [
     # path("venta/agregar-ajax/<int:producto_id>/", agregar_producto_ajax, name="agregar_producto_ajax"),
      path('entrada/nueva/', nueva_entrada, name='nueva_entrada'),
       path('entradas/', listar_entrada, name='listar_entrada'),
+      path('salida/nueva/', nueva_salida, name='nueva_salida'),
+       path('salida/listar/', listar_salida, name='listar_salida'),
+
 
    
     # path('gastos/nuevo/', nuevo_gasto, name='nuevo_gasto'),

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid vh-100 d-flex justify-content-center align-items-center">
+  <div class="col-11 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+    <div class="card shadow-lg p-4 custom-card-width">
+
+      <h5 class="text-center mb-4 text-kova">
+        <i class="fas fa-minus-circle me-2"></i> Registrar salida de producto
+      </h5>
+
+      <!-- Mensajes -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Formulario -->
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-3">
+          {{ form.producto.label_tag }}
+          {{ form.producto }}
+          {% if form.producto.errors %}
+            <div class="text-danger small">{{ form.producto.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.cantidad.label_tag }}
+          {{ form.cantidad }}
+          {% if form.cantidad.errors %}
+            <div class="text-danger small">{{ form.cantidad.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.motivo.label_tag }}
+          {{ form.motivo }}
+          {% if form.motivo.errors %}
+            <div class="text-danger small">{{ form.motivo.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="d-grid mt-3">
+          <button type="submit" class="btn btn-kova">
+            <i class="fas fa-save me-2"></i> Confirmar salida
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Botón principal */
+  .btn-kova {
+    background-color: #fc7319;
+    color: white;
+    border: 1px solid #fc7319;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  .btn-kova:hover {
+    background-color: #e36512;
+    border-color: #e36512;
+    color: white;
+  }
+
+  /* Ancho personalizado para la tarjeta */
+  .custom-card-width {
+    max-width: 600px;
+    margin: auto;
+  }
+
+  /* Color texto Kova */
+  .text-kova {
+    color: #fc7319;
+  }
+</style>
+{% endblock %}
