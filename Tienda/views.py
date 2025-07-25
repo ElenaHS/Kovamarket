@@ -1047,122 +1047,122 @@ def listar_cuadre(request):
 
 
 # Vista para generar el reporte del cuadre en PDF
-@login_required
-@permiso_dependiente_o_superusuario
-def generar_pdf_reporte_cuadre(request, cuadre_id):
-    # 1. Optimización de consultas iniciales
-    cuadre = get_object_or_404(
-        Cuadre.objects.only('id', 'fecha', 'usuario__username'),
-        id=cuadre_id
-    )
-
-    # 2. Consulta optimizada con select_related y only
-    detalles = cuadre.detalles.select_related('producto').only(
-        'cantidad_inicial',
-        'entradas',
-        'salidas',
-        'cantidad_gasto',
-        'precio_unitario_gasto',
-        'importe_gasto',
-        'cantidad_transferencia',
-        'precio_unitario_transferencia',
-        'importe_transferencia',
-        'cantidad_efectivo',
-        'precio_unitario_efectivo',
-        'importe_efectivo',
-        'importe_total_producto',
-        'cantidad_final',
-        'producto__nombre'
-    ).order_by('producto__nombre')[:200]  # Limitar a 200 registros
-
-    # 3. Cálculo eficiente de totales en una sola consulta
-    agregados = detalles.aggregate(
-        Sum('importe_efectivo'),
-        Sum('importe_transferencia'),
-        Sum('importe_gasto'),
-        Sum('salidas')
-    )
-
-    context = {
-        'cuadre': cuadre,
-        'detalles': detalles,
-        'ahora': timezone.now(),
-        'request': request,
-        'total_efectivo': agregados['importe_efectivo__sum'] or 0,
-        'total_transferencia': agregados['importe_transferencia__sum'] or 0,
-        'total_gasto': agregados['importe_gasto__sum'] or 0,
-        'total_general': (agregados['importe_efectivo__sum'] or 0) + (agregados['importe_transferencia__sum'] or 0),
-        'total_salidas': agregados['salidas__sum'] or 0,
-    }
-
-    # 4. Generación de PDF optimizada
-    template = get_template('reporte_cuadre_pdf.html')
-    html = template.render(context)
-    
-    # Usar BytesIO como buffer intermedio
-    pdf_buffer = BytesIO()
-    
-    # Configurar pisa para mejor rendimiento
-    pisa_status = pisa.CreatePDF(
-        html,
-        dest=pdf_buffer,
-        encoding='UTF-8',
-        link_callback=lambda uri, rel: None,
-        show_error_as_pdf=True
-    )
-    
-    if not pisa_status.err:
-        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
-        response['Content-Disposition'] = f'filename="reporte_cuadre_{cuadre.fecha}_{cuadre.id}.pdf"'
-        pdf_buffer.close()
-        return response
-    
-    # Manejo de errores mejorado
-    pdf_buffer.close()
-    error_html = f"""
-    <html>
-        <body>
-            <h1>Error al generar PDF</h1>
-            <p>Se produjo un error al generar el reporte PDF.</p>
-            <p><a href="?format=html">Ver reporte en formato HTML</a></p>
-        </body>
-    </html>
-    """
-    return HttpResponse(error_html, status=500)
 # @login_required
 # @permiso_dependiente_o_superusuario
 # def generar_pdf_reporte_cuadre(request, cuadre_id):
-#     cuadre = get_object_or_404(Cuadre, id=cuadre_id)
-#     detalles = cuadre.detalles.select_related('producto').order_by('producto__nombre')
+#     # 1. Optimización de consultas iniciales
+#     cuadre = get_object_or_404(
+#         Cuadre.objects.only('id', 'fecha', 'usuario__username'),
+#         id=cuadre_id
+#     )
 
-#     total_efectivo = detalles.aggregate(suma=Sum('importe_efectivo'))['suma'] or 0
-#     total_transferencia = detalles.aggregate(suma=Sum('importe_transferencia'))['suma'] or 0
-#     total_gasto = detalles.aggregate(suma=Sum('importe_gasto'))['suma'] or 0
-#     total_general = total_efectivo + total_transferencia
+#     # 2. Consulta optimizada con select_related y only
+#     detalles = cuadre.detalles.select_related('producto').only(
+#         'cantidad_inicial',
+#         'entradas',
+#         'salidas',
+#         'cantidad_gasto',
+#         'precio_unitario_gasto',
+#         'importe_gasto',
+#         'cantidad_transferencia',
+#         'precio_unitario_transferencia',
+#         'importe_transferencia',
+#         'cantidad_efectivo',
+#         'precio_unitario_efectivo',
+#         'importe_efectivo',
+#         'importe_total_producto',
+#         'cantidad_final',
+#         'producto__nombre'
+#     ).order_by('producto__nombre')[:200]  # Limitar a 200 registros
 
-#     total_salidas = detalles.aggregate(suma=Sum('salidas'))['suma'] or 0  # ✅ Nuevo campo agregado al resumen
+#     # 3. Cálculo eficiente de totales en una sola consulta
+#     agregados = detalles.aggregate(
+#         Sum('importe_efectivo'),
+#         Sum('importe_transferencia'),
+#         Sum('importe_gasto'),
+#         Sum('salidas')
+#     )
 
 #     context = {
 #         'cuadre': cuadre,
 #         'detalles': detalles,
 #         'ahora': timezone.now(),
 #         'request': request,
-#         'total_efectivo': total_efectivo,
-#         'total_transferencia': total_transferencia,
-#         'total_gasto': total_gasto,
-#         'total_general': total_general,
-#         'total_salidas': total_salidas,  # ✅ Disponible para mostrar en el PDF si lo deseas
+#         'total_efectivo': agregados['importe_efectivo__sum'] or 0,
+#         'total_transferencia': agregados['importe_transferencia__sum'] or 0,
+#         'total_gasto': agregados['importe_gasto__sum'] or 0,
+#         'total_general': (agregados['importe_efectivo__sum'] or 0) + (agregados['importe_transferencia__sum'] or 0),
+#         'total_salidas': agregados['salidas__sum'] or 0,
 #     }
 
+#     # 4. Generación de PDF optimizada
 #     template = get_template('reporte_cuadre_pdf.html')
 #     html = template.render(context)
-#     response = HttpResponse(content_type='application/pdf')
-#     response['Content-Disposition'] = f'filename="reporte_cuadre_{cuadre.fecha}_{cuadre.id}.pdf"'
+    
+#     # Usar BytesIO como buffer intermedio
+#     pdf_buffer = BytesIO()
+    
+#     # Configurar pisa para mejor rendimiento
+#     pisa_status = pisa.CreatePDF(
+#         html,
+#         dest=pdf_buffer,
+#         encoding='UTF-8',
+#         link_callback=lambda uri, rel: None,
+#         show_error_as_pdf=True
+#     )
+    
+#     if not pisa_status.err:
+#         response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+#         response['Content-Disposition'] = f'filename="reporte_cuadre_{cuadre.fecha}_{cuadre.id}.pdf"'
+#         pdf_buffer.close()
+#         return response
+    
+#     # Manejo de errores mejorado
+#     pdf_buffer.close()
+#     error_html = f"""
+#     <html>
+#         <body>
+#             <h1>Error al generar PDF</h1>
+#             <p>Se produjo un error al generar el reporte PDF.</p>
+#             <p><a href="?format=html">Ver reporte en formato HTML</a></p>
+#         </body>
+#     </html>
+#     """
+#     return HttpResponse(error_html, status=500)
+@login_required
+@permiso_dependiente_o_superusuario
+def generar_pdf_reporte_cuadre(request, cuadre_id):
+    cuadre = get_object_or_404(Cuadre, id=cuadre_id)
+    detalles = cuadre.detalles.select_related('producto').order_by('producto__nombre')
 
-#     pisa_status = pisa.CreatePDF(html, dest=response)
-#     if pisa_status.err:
-#         return HttpResponse('Ocurrió un error al generar el PDF', status=500)
-#     return response
+    total_efectivo = detalles.aggregate(suma=Sum('importe_efectivo'))['suma'] or 0
+    total_transferencia = detalles.aggregate(suma=Sum('importe_transferencia'))['suma'] or 0
+    total_gasto = detalles.aggregate(suma=Sum('importe_gasto'))['suma'] or 0
+    total_general = total_efectivo + total_transferencia
+
+    total_salidas = detalles.aggregate(suma=Sum('salidas'))['suma'] or 0  # ✅ Nuevo campo agregado al resumen
+
+    context = {
+        'cuadre': cuadre,
+        'detalles': detalles,
+        'ahora': timezone.now(),
+        'request': request,
+        'total_efectivo': total_efectivo,
+        'total_transferencia': total_transferencia,
+        'total_gasto': total_gasto,
+        'total_general': total_general,
+        'total_salidas': total_salidas,  # ✅ Disponible para mostrar en el PDF si lo deseas
+    }
+
+    template = get_template('reporte_cuadre_pdf.html')
+    html = template.render(context)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename="reporte_cuadre_{cuadre.fecha}_{cuadre.id}.pdf"'
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('Ocurrió un error al generar el PDF', status=500)
+    return response
 
 
 # # Vista para registrar un nuevo gasto

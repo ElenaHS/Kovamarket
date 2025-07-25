@@ -2,151 +2,138 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Reporte de Cuadre</title>
     <style>
         @page {
             size: A4 landscape;
-            margin: 10px;
+            margin: 20px;
         }
+
         body {
             font-family: Arial, sans-serif;
-            font-size: 9px;
+            font-size: 10px;
             color: #333;
-            margin: 0;
-            padding: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
         }
-        .header {
-            display: flex;
-            margin-bottom: 10px;
-        }
-        .logo {
-            width: 50px;
-            height: auto;
-            margin-right: 10px;
-        }
+
         h1 {
             color: #fc7319;
-            font-size: 16px;
-            margin: 0 0 5px 0;
+            font-size: 20px;
+            margin-bottom: 5px;
         }
-        .info-text {
+
+        .info p {
             margin: 3px 0;
-            font-size: 9px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8px;
-            page-break-inside: auto;
+            margin-top: 10px;
         }
+
         th, td {
             border: 1px solid #ccc;
-            padding: 4px;
+            padding: 5px;
             text-align: center;
         }
+
         th {
             background-color: #f2f2f2;
+            color: #555;
             font-weight: bold;
-            font-size: 8px;
-            padding: 5px 3px;
+            text-transform: uppercase;
+            font-size: 9px;
         }
+
+        td {
+            font-size: 9px;
+        }
+
+        .text-kova {
+            color: #fc7319;
+            font-weight: bold;
+        }
+
         .resumen-final {
-            margin-top: 15px;
-            padding-top: 8px;
+            margin-top: 30px;
+            padding-top: 10px;
             border-top: 2px solid #444;
         }
+
         .resumen-final h3 {
             color: #fc7319;
             margin-bottom: 8px;
-            font-size: 12px;
         }
-        .bold {
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .logo-title img {
+            width: 60px;
+            height: auto;
+            margin-right: 15px;
+        }
+
+        .logo-title h1 {
+            margin: 0;
+        }
+
+        .fw-bold {
             font-weight: bold;
-        }
-        /* Colores optimizados */
-        .bg-gasto { background-color: #fff0f0 !important; }
-        .bg-transferencia { background-color: #f0f8ff !important; }
-        .bg-efectivo { background-color: #f0fff0 !important; }
-        /* Columnas ajustadas */
-        .col-producto {
-            width: 30%;
-            text-align: left;
-            padding-left: 8px;
-        }
-        .col-numero {
-            width: 5%;
-            min-width: 30px;
-        }
-        .col-total {
-            width: 7%;
         }
     </style>
 </head>
 <body>
+
     <!-- Encabezado -->
-    <div class="header">
-        <img src="https://i.ibb.co/HLzVRXTX/logo-kovamarket.png" alt="Logo" class="logo" loading="lazy">
+    <div class="logo-title">
+        <img src="https://i.ibb.co/HLzVRXTX/logo-kovamarket.png" alt="Logo KovaMarket">
         <div>
             <h1>Reporte de Cuadre</h1>
-            <div class="info-text"><strong>Fecha:</strong> {{ cuadre.fecha }}</div>
-            <div class="info-text"><strong>Responsable:</strong> {{ cuadre.usuario.username }}</div>
-            <div class="info-text"><strong>Hora:</strong> {{ ahora|date:"H:i" }}</div>
+            <p><strong>Fecha:</strong> {{ cuadre.fecha }}</p>
+            <p><strong>Generado por:</strong> {{ request.user.username }}</p>
+            <p><strong>Responsable del cuadre:</strong> {{ cuadre.usuario.username }}</p>
+            <p><strong>Generado en:</strong> {{ ahora|date:"d/m/Y H:i" }}</p>
         </div>
     </div>
 
-    <!-- Tabla principal -->
+    <!-- Tabla del cuadre -->
     <table>
         <thead>
             <tr>
-                <th rowspan="2" class="col-producto">Producto</th>
-                <th rowspan="2" class="col-numero">Inicial</th>
-                <th rowspan="2" class="col-numero">Entradas</th>
-                <th rowspan="2" class="col-numero">Salidas</th>
-                <th colspan="3" class="bg-gasto">Gastos</th>
-                <th colspan="3" class="bg-transferencia">Transferencias</th>
-                <th colspan="3" class="bg-efectivo">Efectivo</th>
-                <th rowspan="2" class="col-total">Total</th>
-                <th rowspan="2" class="col-numero">Final</th>
-            </tr>
-            <tr>
-                <th class="bg-gasto">Cant.</th>
-                <th class="bg-gasto">P. Unit.</th>
-                <th class="bg-gasto">Total</th>
-                <th class="bg-transferencia">Cant.</th>
-                <th class="bg-transferencia">P. Unit.</th>
-                <th class="bg-transferencia">Total</th>
-                <th class="bg-efectivo">Cant.</th>
-                <th class="bg-efectivo">P. Unit.</th>
-                <th class="bg-efectivo">Total</th>
+                <th>Producto</th>
+                <th>Cantidad Inicial</th>
+                <th>Entradas</th>
+                <th>Salidas</th> <!-- Nueva columna -->
+                <th>Gasto (Cant / Precio / Importe)</th>
+                <th>Transferencia (Cant / Precio / Importe)</th>
+                <th>Efectivo (Cant / Precio / Importe)</th>
+                <th>Importe total</th>
+                <th>Cantidad Final</th>
             </tr>
         </thead>
         <tbody>
             {% for d in detalles %}
             <tr>
-                <td class="col-producto">{{ d.producto.nombre }}</td>
+                <td>{{ d.producto.nombre }}</td>
                 <td>{{ d.cantidad_inicial }}</td>
                 <td>{{ d.entradas }}</td>
-                <td>{{ d.salidas|default:0 }}</td>
-                <td class="bg-gasto">{{ d.cantidad_gasto|default:"0" }}</td>
-                <td class="bg-gasto">${{ d.precio_unitario_gasto|default:"0.00"|floatformat:2 }}</td>
-                <td class="bg-gasto">${{ d.importe_gasto|default:"0.00"|floatformat:2 }}</td>
-                <td class="bg-transferencia">{{ d.cantidad_transferencia|default:"0" }}</td>
-                <td class="bg-transferencia">${{ d.precio_unitario_transferencia|default:"0.00"|floatformat:2 }}</td>
-                <td class="bg-transferencia">${{ d.importe_transferencia|default:"0.00"|floatformat:2 }}</td>
-                <td class="bg-efectivo">{{ d.cantidad_efectivo|default:"0" }}</td>
-                <td class="bg-efectivo">${{ d.precio_unitario_efectivo|default:"0.00"|floatformat:2 }}</td>
-                <td class="bg-efectivo">${{ d.importe_efectivo|default:"0.00"|floatformat:2 }}</td>
-                <td class="bold">${{ d.importe_total_producto|floatformat:2 }}</td>
-                <td class="bold">{{ d.cantidad_final }}</td>
+                <td>{{ d.salidas|default:0 }}</td> <!-- Mostrar salidas, default 0 si no hay -->
+                <td>{{ d.cantidad_gasto }} / ${{ d.precio_unitario_gasto|floatformat:2 }} / ${{ d.importe_gasto|floatformat:2 }}</td>
+                <td>{{ d.cantidad_transferencia }} / ${{ d.precio_unitario_transferencia|floatformat:2 }} / ${{ d.importe_transferencia|floatformat:2 }}</td>
+                <td>{{ d.cantidad_efectivo }} / ${{ d.precio_unitario_efectivo|floatformat:2 }} / ${{ d.importe_efectivo|floatformat:2 }}</td>
+                <td class="fw-bold">${{ d.importe_total_producto|floatformat:2 }}</td>
+                <td class="fw-bold">{{ d.cantidad_final }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <!-- Resumen final EXACTAMENTE como lo solicitaste -->
+    <!-- Resumen final -->
     <div class="resumen-final">
         <h3>Resumen General</h3>
         <p><strong>Total por ventas en efectivo:</strong> ${{ total_efectivo|floatformat:2 }}</p>
@@ -154,5 +141,6 @@
         <p><strong>Total de gastos:</strong> ${{ total_gasto|floatformat:2 }}</p>
         <p><strong>Total general de ingresos:</strong> ${{ total_general|floatformat:2 }}</p>
     </div>
+
 </body>
 </html>
