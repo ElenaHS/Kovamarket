@@ -50,6 +50,29 @@
             font-size: 9px;
         }
 
+        /* Columna de producto más ancha */
+        .col-producto {
+            width: 25%;
+            text-align: left;
+        }
+
+        /* Columnas de datos más estrechas */
+        .col-data {
+            width: 5%;
+        }
+
+        .col-cantidad {
+            width: 6%;
+        }
+
+        .col-precio {
+            width: 8%;
+        }
+
+        .col-importe {
+            width: 10%;
+        }
+
         .text-kova {
             color: #fc7319;
             font-weight: bold;
@@ -101,33 +124,59 @@
         </div>
     </div>
 
-    <!-- Tabla del cuadre -->
+    <!-- Tabla del cuadre - Estructura modificada -->
     <table>
         <thead>
             <tr>
-                <th>Producto</th>
-                <th>Cantidad Inicial</th>
-                <th>Entradas</th>
-                <th>Salidas</th> <!-- Nueva columna -->
-                <th>Gasto (Cant / Precio / Importe)</th>
-                <th>Transferencia (Cant / Precio / Importe)</th>
-                <th>Efectivo (Cant / Precio / Importe)</th>
-                <th>Importe total</th>
-                <th>Cantidad Final</th>
+                <th class="col-producto">Producto</th>
+                <th class="col-data">Cantidad Inicial</th>
+                <th class="col-data">Entradas</th>
+                <th class="col-data">Salidas</th>
+                
+                <!-- Gastos - Columnas separadas -->
+                <th class="col-cantidad">Gasto Cant</th>
+                <th class="col-precio">Gasto Precio</th>
+                <th class="col-importe">Gasto Total</th>
+                
+                <!-- Transferencias - Columnas separadas -->
+                <th class="col-cantidad">Transf Cant</th>
+                <th class="col-precio">Transf Precio</th>
+                <th class="col-importe">Transf Total</th>
+                
+                <!-- Efectivo - Columnas separadas -->
+                <th class="col-cantidad">Efectivo Cant</th>
+                <th class="col-precio">Efectivo Precio</th>
+                <th class="col-importe">Efectivo Total</th>
+                
+                <th class="col-importe">Importe total</th>
+                <th class="col-data">Cantidad Final</th>
             </tr>
         </thead>
         <tbody>
             {% for d in detalles %}
             <tr>
-                <td>{{ d.producto.nombre }}</td>
-                <td>{{ d.cantidad_inicial }}</td>
-                <td>{{ d.entradas }}</td>
-                <td>{{ d.salidas|default:0 }}</td> <!-- Mostrar salidas, default 0 si no hay -->
-                <td>{{ d.cantidad_gasto }} / ${{ d.precio_unitario_gasto|floatformat:2 }} / ${{ d.importe_gasto|floatformat:2 }}</td>
-                <td>{{ d.cantidad_transferencia }} / ${{ d.precio_unitario_transferencia|floatformat:2 }} / ${{ d.importe_transferencia|floatformat:2 }}</td>
-                <td>{{ d.cantidad_efectivo }} / ${{ d.precio_unitario_efectivo|floatformat:2 }} / ${{ d.importe_efectivo|floatformat:2 }}</td>
-                <td class="fw-bold">${{ d.importe_total_producto|floatformat:2 }}</td>
-                <td class="fw-bold">{{ d.cantidad_final }}</td>
+                <td class="col-producto">{{ d.producto.nombre }}</td>
+                <td class="col-data">{{ d.cantidad_inicial }}</td>
+                <td class="col-data">{{ d.entradas }}</td>
+                <td class="col-data">{{ d.salidas|default:0 }}</td>
+                
+                <!-- Gastos -->
+                <td class="col-cantidad">{{ d.cantidad_gasto }}</td>
+                <td class="col-precio">${{ d.precio_unitario_gasto|floatformat:2 }}</td>
+                <td class="col-importe">${{ d.importe_gasto|floatformat:2 }}</td>
+                
+                <!-- Transferencias -->
+                <td class="col-cantidad">{{ d.cantidad_transferencia }}</td>
+                <td class="col-precio">${{ d.precio_unitario_transferencia|floatformat:2 }}</td>
+                <td class="col-importe">${{ d.importe_transferencia|floatformat:2 }}</td>
+                
+                <!-- Efectivo -->
+                <td class="col-cantidad">{{ d.cantidad_efectivo }}</td>
+                <td class="col-precio">${{ d.precio_unitario_efectivo|floatformat:2 }}</td>
+                <td class="col-importe">${{ d.importe_efectivo|floatformat:2 }}</td>
+                
+                <td class="col-importe fw-bold">${{ d.importe_total_producto|floatformat:2 }}</td>
+                <td class="col-data fw-bold">{{ d.cantidad_final }}</td>
             </tr>
             {% endfor %}
         </tbody>
