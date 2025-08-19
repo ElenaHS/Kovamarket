@@ -334,6 +334,54 @@ class CuadreDetalle(models.Model):
 
 
 
+# Modelo para el carrusel del inicio
+class CarruselImagen(models.Model):
+    """Modelo para gestionar imágenes del carrusel desde el admin usando URLs externas"""
+    orden = models.PositiveIntegerField(
+        default=0,
+        help_text="Orden de aparición (0 = primero)"
+    )
+    # Versión escritorio (obligatoria)
+    url_imagen_escritorio = models.URLField(
+        max_length=500,
+        help_text="URL de la imagen para escritorio (ej: https://mi-nube.com/imagen1.jpg)"
+    )
+    # Versión móvil (opcional)
+    url_imagen_movil = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="URL de la imagen para móvil (opcional, si no se usa, se hereda la de escritorio)"
+    )
+    titulo = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Título descriptivo (para SEO)"
+    )
+    activo = models.BooleanField(
+        default=True,
+        help_text="Mostrar esta imagen en el carrusel"
+    )
+    # Opciones de enlace (para hacer clickable la imagen)
+    url_destino = models.URLField(
+        blank=True,
+        help_text="URL a la que dirige la imagen (ej: /promociones/)"
+    )
+    texto_boton = models.CharField(
+        max_length=50,
+        blank=True,
+        default="Ver más",
+        help_text="Texto del botón (solo si hay URL destino)"
+    )
+
+    class Meta:
+        ordering = ['orden']
+        verbose_name_plural = "Imágenes del Carrusel"
+
+    def __str__(self):
+        return f"Carrusel #{self.orden} - {self.titulo or 'Sin título'}"
+
+
 
 
 # # Modelo de Gasto (productos usados internamente)

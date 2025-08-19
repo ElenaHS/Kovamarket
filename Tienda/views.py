@@ -1,7 +1,7 @@
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Categoria, Producto, Pregunta, Carrito, CarritoItem, Venta, VentaItem, VentaTemporal, VentaTemporalItem, Cuadre, CuadreDetalle, Entrada, Salida
+from .models import Categoria, Producto, Pregunta, Carrito, CarritoItem, Venta, VentaItem, VentaTemporal, VentaTemporalItem, Cuadre, CuadreDetalle, Entrada, Salida, CarruselImagen
 from .forms import VentaForm, VentaItemForm, SalidaForm, RegistroForm,  LoginForm, EntradaForm, SalidaForm
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
@@ -88,8 +88,41 @@ def register(request):
 
 # Vista de inicio
 def inicio(request):
-    categorias = Categoria.objects.all()  # Obtener todas las categorías
-    return render(request, 'inicio.html', {'categorias': categorias})
+    # Obtener todas las categorías activas
+    categorias = Categoria.objects.all()
+    
+    # Obtener imágenes del carrusel activas ordenadas
+    carrusel_imagenes = CarruselImagen.objects.filter(activo=True).order_by('orden')
+    
+    # Obtener productos activos (no deshabilitados y disponibles)
+    productos_list = Producto.objects.filter(deshabilitado=False, disponibilidad=True)
+    
+    # Ordenamiento
+    orden = request.GET.get('ordenar', 'nombre')
+    if orden == 'precio_asc':
+        productos_list = productos_list.order_by('precio')
+    elif orden == 'precio_desc':
+        productos_list = productos_list.order_by('-precio')
+    elif orden == 'nuevo':
+        productos_list = productos_list.order_by('-fecha_creado')
+    else:
+        productos_list = productos_list.order_by('nombre')
+    
+    # Paginación (12 productos por página)
+    paginator = Paginator(productos_list, 12)
+    page_number = request.GET.get('page')
+    productos = paginator.get_page(page_number)
+    
+    context = {
+        'categorias': categorias,
+        'carrusel_imagenes': carrusel_imagenes,
+        'productos': productos,  # Añadimos los productos paginados
+    }
+    
+    return render(request, 'inicio.html', context)
+
+
+
 
 # Listar categorías
 def listar_categoria(request):

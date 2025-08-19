@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categoria, Producto, Marca, Pregunta, Carrito, CarritoItem, Venta, VentaItem, Entrada, Cuadre, CuadreDetalle, Salida
+from .models import Categoria, Producto, Marca, Pregunta, Carrito, CarritoItem, Venta, VentaItem, Entrada, Cuadre, CuadreDetalle, Salida, CarruselImagen
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -271,6 +271,28 @@ class CuadreAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False  # Para evitar que se editen desde el admin
+
+
+# Admin para el carrusel del inicio
+@admin.register(CarruselImagen)
+class CarruselImagenAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'orden', 'activo', 'url_imagen_escritorio')
+    list_editable = ('orden', 'activo')
+    list_filter = ('activo',)
+    search_fields = ('titulo', 'url_imagen_escritorio')
+    fieldsets = (
+        (None, {
+            'fields': ('orden', 'activo', 'titulo')
+        }),
+        ('Imágenes', {
+            'fields': ('url_imagen_escritorio', 'url_imagen_movil'),
+            'description': "Usa URLs directas a tus imágenes en la nube."
+        }),
+        ('Enlace', {
+            'fields': ('url_destino', 'texto_boton'),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 
