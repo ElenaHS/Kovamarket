@@ -12,10 +12,9 @@
         <i class="fas fa-minus-circle me-2"></i> Listado de salidas
       </h5>
 
-        <a href="{% url 'nueva_salida' %}" class="btn btn-kova">
-    <i class="fas fa-minus-circle me-2"></i> Registrar salida
-</a>
-
+      <a href="{% url 'nueva_salida' %}" class="btn btn-kova">
+        <i class="fas fa-minus-circle me-2"></i> Registrar salida
+      </a>
 
       {% if salidas %}
       <div class="table-responsive">
@@ -41,42 +40,94 @@
         </table>
       </div>
 
-      <!-- Paginación -->
-      <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-          {% if salidas.has_previous %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ salidas.previous_page_number }}" aria-label="Previous">
-                <span aria-hidden="true">&laquo;</span>
-              </a>
-            </li>
-          {% else %}
-            <li class="page-item disabled">
-              <span class="page-link">&laquo;</span>
-            </li>
-          {% endif %}
-
-          {% for num in salidas.paginator.page_range %}
-            {% if salidas.number == num %}
-              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-            {% elif num > salidas.number|add:'-3' and num < salidas.number|add:'3' %}
-              <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+      <!-- Paginación Mejorada -->
+      <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Page navigation">
+          <ul class="pagination">
+            <!-- Flecha anterior -->
+            {% if salidas.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ salidas.previous_page_number }}" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link" aria-hidden="true">&laquo;</span></li>
             {% endif %}
-          {% endfor %}
 
-          {% if salidas.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ salidas.next_page_number }}" aria-label="Next">
-                <span aria-hidden="true">&raquo;</span>
-              </a>
-            </li>
-          {% else %}
-            <li class="page-item disabled">
-              <span class="page-link">&raquo;</span>
-            </li>
-          {% endif %}
-        </ul>
-      </nav>
+            <!-- Lógica para mostrar solo 10 páginas con puntos suspensivos -->
+            {% with total_pages=salidas.paginator.num_pages current_page=salidas.number %}
+              {% if total_pages <= 10 %}
+                <!-- Si hay 10 o menos páginas, mostrar todas -->
+                {% for num in salidas.paginator.page_range %}
+                  {% if num == current_page %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                  {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+                <!-- Si hay más de 10 páginas, usar lógica avanzada -->
+                {% if current_page <= 6 %}
+                  <!-- Mostrar páginas 1 a 8, luego puntos y última página -->
+                  {% for num in salidas.paginator.page_range %}
+                    {% if num <= 8 %}
+                      {% if num == current_page %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                      {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                  <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                  <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+                {% elif current_page >= total_pages|add:"-5" %}
+                  <!-- Mostrar primera página, puntos y últimas 8 páginas -->
+                  <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+                  <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                  {% for num in salidas.paginator.page_range %}
+                    {% if num >= total_pages|add:"-7" %}
+                      {% if num == current_page %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                      {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <!-- Mostrar primera página, puntos, páginas alrededor de la actual, puntos y última página -->
+                  <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+                  <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                  
+                  {% for num in salidas.paginator.page_range %}
+                    {% if num >= current_page|add:"-3" and num <= current_page|add:"3" %}
+                      {% if num == current_page %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                      {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                  
+                  <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                  <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+                {% endif %}
+              {% endif %}
+            {% endwith %}
+
+            <!-- Flecha siguiente -->
+            {% if salidas.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ salidas.next_page_number }}" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link" aria-hidden="true">&raquo;</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
 
       {% else %}
         <p class="text-center text-muted">No hay salidas registradas.</p>
@@ -95,6 +146,55 @@
   .custom-card-width {
     max-width: 950px;
     margin: auto;
+  }
+  
+  /* ESTILOS DE PAGINACIÓN PERSONALIZADOS */
+  .pagination .page-link {
+    color: #fc7319;
+    border: 1px solid #fc7319;
+    background-color: white;
+    transition: all 0.3s ease;
+  }
+
+  .pagination .page-link:hover {
+    color: white;
+    background-color: #fc7319;
+    border-color: #fc7319;
+  }
+
+  .pagination .page-item.active .page-link {
+    color: white;
+    background-color: #fc7319;
+    border-color: #fc7319;
+  }
+
+  .pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: white;
+    border-color: #dee2e6;
+  }
+  
+  /* Estilo para los puntos suspensivos en la paginación */
+  .page-item-disabled-dots .page-link {
+    pointer-events: none;
+    cursor: default;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+  }
+  
+  /* Estilo para el botón naranja */
+  .btn-kova {
+    background-color: #fc7319;
+    color: white;
+    border: 1px solid #fc7319;
+    transition: all 0.3s ease;
+  }
+
+  .btn-kova:hover {
+    background-color: #e36512;
+    border-color: #e36512;
+    color: white;
   }
 </style>
 {% endblock %}

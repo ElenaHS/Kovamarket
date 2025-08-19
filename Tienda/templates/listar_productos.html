@@ -104,6 +104,41 @@
     .btn-kova-outline i {
         margin-right: 5px;
     }
+    
+    /* ESTILOS DE PAGINACIÓN PERSONALIZADOS */
+    .pagination .page-link {
+        color: #fc7319;
+        border: 1px solid #fc7319;
+        background-color: white;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+        color: white;
+        background-color: #fc7319;
+        border-color: #fc7319;
+    }
+
+    .pagination .page-item.active .page-link {
+        color: white;
+        background-color: #fc7319;
+        border-color: #fc7319;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        background-color: white;
+        border-color: #dee2e6;
+    }
+    
+    /* Estilo para los puntos suspensivos en la paginación */
+    .page-item-disabled-dots .page-link {
+        pointer-events: none;
+        cursor: default;
+        color: #6c757d;
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
 </style>
 
 <div class="container mt-4">
@@ -179,10 +214,11 @@
         {% endfor %}
     </div>
 
-    <!-- Paginación -->
+    <!-- Paginación Mejorada -->
     <div class="d-flex justify-content-center mt-4">
         <nav aria-label="Page navigation">
             <ul class="pagination">
+                <!-- Flecha anterior -->
                 {% if productos.has_previous %}
                     <li class="page-item">
                         <a class="page-link" href="?page={{ productos.previous_page_number }}&ordenar={{ request.GET.ordenar }}" aria-label="Previous">
@@ -193,14 +229,67 @@
                     <li class="page-item disabled"><span class="page-link" aria-hidden="true">&laquo;</span></li>
                 {% endif %}
 
-                {% for num in productos.paginator.page_range %}
-                    {% if productos.number == num %}
-                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                <!-- Lógica para mostrar solo 10 páginas con puntos suspensivos -->
+                {% with total_pages=productos.paginator.num_pages current_page=productos.number %}
+                    {% if total_pages <= 10 %}
+                        <!-- Si hay 10 o menos páginas, mostrar todas -->
+                        {% for num in productos.paginator.page_range %}
+                            {% if num == current_page %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}&ordenar={{ request.GET.ordenar }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
                     {% else %}
-                        <li class="page-item"><a class="page-link" href="?page={{ num }}&ordenar={{ request.GET.ordenar }}">{{ num }}</a></li>
+                        <!-- Si hay más de 10 páginas, usar lógica avanzada -->
+                        {% if current_page <= 6 %}
+                            <!-- Mostrar páginas 1 a 8, luego puntos y última página -->
+                            {% for num in productos.paginator.page_range %}
+                                {% if num <= 8 %}
+                                    {% if num == current_page %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ num }}&ordenar={{ request.GET.ordenar }}">{{ num }}</a></li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ total_pages }}&ordenar={{ request.GET.ordenar }}">{{ total_pages }}</a></li>
+                        {% elif current_page >= total_pages|add:"-5" %}
+                            <!-- Mostrar primera página, puntos y últimas 8 páginas -->
+                            <li class="page-item"><a class="page-link" href="?page=1&ordenar={{ request.GET.ordenar }}">1</a></li>
+                            <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                            {% for num in productos.paginator.page_range %}
+                                {% if num >= total_pages|add:"-7" %}
+                                    {% if num == current_page %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ num }}&ordenar={{ request.GET.ordenar }}">{{ num }}</a></li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <!-- Mostrar primera página, puntos, páginas alrededor de la actual, puntos y última página -->
+                            <li class="page-item"><a class="page-link" href="?page=1&ordenar={{ request.GET.ordenar }}">1</a></li>
+                            <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                            
+                            {% for num in productos.paginator.page_range %}
+                                {% if num >= current_page|add:"-3" and num <= current_page|add:"3" %}
+                                    {% if num == current_page %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ num }}&ordenar={{ request.GET.ordenar }}">{{ num }}</a></li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ total_pages }}&ordenar={{ request.GET.ordenar }}">{{ total_pages }}</a></li>
+                        {% endif %}
                     {% endif %}
-                {% endfor %}
+                {% endwith %}
 
+                <!-- Flecha siguiente -->
                 {% if productos.has_next %}
                     <li class="page-item">
                         <a class="page-link" href="?page={{ productos.next_page_number }}&ordenar={{ request.GET.ordenar }}" aria-label="Next">
