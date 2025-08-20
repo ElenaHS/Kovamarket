@@ -27,15 +27,20 @@
             z-index: 1000;
         }
 
-        /* Padding para evitar que el contenido quede oculto tras la navbar y barra de categorías */
-        body {
-            padding-top: 96px; /* 56px navbar + 40px barra de categorías */
+        /* Variable CSS para la altura de la navbar */
+        :root {
+            --navbar-height: 56px;
         }
 
-        /* Estilo para la barra horizontal de categorías */
+        /* Padding dinámico para el body basado en la altura real de la navbar */
+        body {
+            padding-top: calc(var(--navbar-height) + 40px);
+        }
+
+        /* Estilo para la barra horizontal de categorías - POSICIÓN ABSOLUTA */
         .categories-bar {
             position: fixed;
-            top: 56px;
+            top: var(--navbar-height);
             left: 0;
             width: 100%;
             background-color: #f8f9fa;
@@ -166,35 +171,55 @@
         .nav-link.active {
             color:  #fc7319 !important;
         }
+
+        /* Asegurar que la navbar no colapse los elementos en múltiples líneas */
+        .navbar-nav {
+            flex-wrap: nowrap;
+        }
         
-        /* Fuerza que el menú se colapse a 1280px (resolución objetivo) */
-        @media (max-width: 1280px) {
+        .nav-item {
+            white-space: nowrap;
+        }
+
+        /* Cambiar el breakpoint de Bootstrap para que se colapse a 1244px */
+        /* Sobrescribir el comportamiento por defecto de navbar-expand-lg */
+        @media (max-width: 1244px) {
+            .navbar-expand-lg .navbar-nav {
+                flex-direction: column;
+            }
+            
             .navbar-expand-lg .navbar-collapse {
                 display: none !important;
             }
+            
             .navbar-expand-lg .navbar-toggler {
                 display: block !important;
             }
+            
+            .navbar-expand-lg .navbar-collapse.show {
+                display: flex !important;
+                flex-direction: column;
+            }
+            
+            /* Ajustar el padding del body cuando el menú está expandido */
+            body.navbar-expanded {
+                padding-top: calc(var(--navbar-height) + 200px + 40px);
+            }
+            
+            /* La barra de categorías se ajusta dinámicamente con JS */
+            .categories-bar {
+                transition: top 0.3s ease;
+            }
         }
-        
-        @media (min-width: 1281px) {
+
+        @media (min-width: 1245px) {
             .navbar-expand-lg .navbar-collapse {
                 display: flex !important;
                 flex-basis: auto;
             }
+            
             .navbar-expand-lg .navbar-toggler {
                 display: none !important;
-            }
-        }
-        
-        /* Para pantallas muy pequeñas */
-        @media (max-width: 576px) {
-            .categories-bar li {
-                padding: 8px 10px;
-            }
-            
-            .categories-bar a {
-                font-size: 0.85rem;
             }
         }
     </style>
@@ -379,6 +404,40 @@
     <!-- Script de Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- JavaScript para ajustar dinámicamente la posición de la barra de categorías -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navbar = document.querySelector('.navbar');
+            const categoriesBar = document.querySelector('.categories-bar');
+            
+            function adjustCategoriesBar() {
+                // Obtener la altura real de la navbar
+                const navbarHeight = navbar.offsetHeight;
+                
+                // Actualizar la variable CSS y la posición de la barra de categorías
+                document.documentElement.style.setProperty('--navbar-height', navbarHeight + 'px');
+                
+                // Ajustar el padding del body
+                document.body.style.paddingTop = (navbarHeight + 40) + 'px';
+                
+                // Ajustar la posición de la barra de categorías
+                categoriesBar.style.top = navbarHeight + 'px';
+            }
+            
+            // Ajustar inicialmente
+            adjustCategoriesBar();
+            
+            // Reajustar cuando la ventana cambie de tamaño
+            window.addEventListener('resize', adjustCategoriesBar);
+            
+            // Reajustar cuando el menú colapsable se expanda/contraiga (para Bootstrap 5)
+            const navbarCollapse = document.getElementById('navbarSupportedContent');
+            if (navbarCollapse) {
+                navbarCollapse.addEventListener('shown.bs.collapse', adjustCategoriesBar);
+                navbarCollapse.addEventListener('hidden.bs.collapse', adjustCategoriesBar);
+            }
+        });
+    </script>
+
 </body>
-</html>
 </html>
