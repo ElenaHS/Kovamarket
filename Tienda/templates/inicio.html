@@ -110,28 +110,34 @@
         }
     }
 
-    /* Carrusel */
+    /* Carrusel - MODIFICADO PARA RECORTE EN LUGAR DE REDIMENSIONAMIENTO */
     #carouselExampleAutoplaying {
-        width: 100%;  /* Asegura que el carrusel ocupe todo el ancho de la pantalla */
+        width: 100%;
         margin: 0 auto;
+        overflow: hidden; /* Oculta el exceso de contenido al recortar */
     }
 
     #carouselExampleAutoplaying .carousel-inner {
-        height: 350px;
+        height: 350px; /* Altura fija para escritorio */
+    }
+
+    #carouselExampleAutoplaying .carousel-item {
+        height: 100%; /* Ocupa toda la altura del contenedor */
     }
 
     #carouselExampleAutoplaying .carousel-item img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: cover; /* Recorta la imagen manteniendo proporción */
+        object-position: center; /* Centra la imagen al recortar */
     }
 
     /* Estilo para el botón del carrusel - AJUSTADO A UN TAMAÑO MÁS ADECUADO */
     .carousel-caption .btn-kova {
-        font-size: 1rem;    /* Reducido de 1.2rem a 1rem */
-        padding: 10px 20px; /* Reducido de 12px 24px a 10px 20px */
-        border-radius: 6px; /* Bordes más redondeados */
-        font-weight: bold;  /* Texto en negrita */
+        font-size: 1rem;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: bold;
     }
 
     /* Ajuste para la vista móvil */
@@ -142,9 +148,9 @@
 
         /* Eliminar el espacio entre el carrusel y las categorías */
         .categories-scroll {
-            margin-top: 0 !important;  /* Elimina el margen superior innecesario */
-            padding-top: 0 !important; /* Elimina cualquier padding extra */
-            margin-bottom: 0 !important;  /* Elimina el margen inferior en móvil */
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+            margin-bottom: 0 !important;
         }
     }
 
@@ -153,7 +159,7 @@
         overflow-x: auto;
         white-space: nowrap;
         padding-bottom: 10px;
-        margin-top: 20px; /* Ajuste en vista escritorio, lo cambiamos en móvil */
+        margin-top: 20px;
     }
 
     .categories-scroll .row {
@@ -173,13 +179,13 @@
 
     /* Estilo para los enlaces de categoría */
     .categoria-enlace {
-        text-decoration: none !important; /* Aseguramos que no haya subrayado */
+        text-decoration: none !important;
     }
 
     /* Estilo para el texto del nombre de categoría */
     .categoria-nombre {
-        color: #000 !important; /* Color negro */
-        font-size: 0.9rem !important; /* Tamaño de letra más pequeño */
+        color: #000 !important;
+        font-size: 0.9rem !important;
         margin: 0;
         padding: 0;
         transition: color 0.3s ease;
@@ -196,20 +202,19 @@
             flex-wrap: nowrap;
         }
         .categories-scroll .col {
-            flex: 0 0 auto; /* Evita que las columnas se reorganicen */
+            flex: 0 0 auto;
         }
         .categories-scroll .img-fluid {
-            width: 80px;  /* Menor tamaño para imágenes en móvil */
+            width: 80px;
             height: 80px;
         }
 
-        /* Reducir el margen entre el carrusel y las categorías en móvil */
         .categories-scroll {
-            margin-top: 5px !important;  /* Espacio más pequeño entre el carrusel y las categorías */
+            margin-top: 5px !important;
         }
     }
 
-    /* ESTILOS DE PAGINACIÓN PERSONALIZADOS (NUEVO) */
+    /* ESTILOS DE PAGINACIÓN PERSONALIZADOS */
     .pagination .page-link {
         color: #fc7319;
         border: 1px solid #fc7319;
@@ -235,7 +240,6 @@
         border-color: #dee2e6;
     }
     
-    /* Estilo para los puntos suspensivos en la paginación */
     .page-item-disabled-dots .page-link {
         pointer-events: none;
         cursor: default;
@@ -245,27 +249,30 @@
     }
 </style>
 
-<!-- Carrusel Dinámico -->
+<!-- Carrusel Dinámico - MODIFICADO PARA RECORTE -->
 <div id="carouselExampleAutoplaying" class="carousel slide" data-bs-ride="carousel">
     <div class="carousel-inner">
         {% for imagen in carrusel_imagenes %}
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <!-- Usa imagen móvil si existe y está en pantalla pequeña -->
+                <!-- Enlace de la imagen -->
                 <a href="{{ imagen.url_destino|default:'#' }}" {% if not imagen.url_destino %}onclick="return false;"{% endif %}>
                     <picture>
+                        <!-- Para móviles: usar imagen específica si existe -->
+                        {% if imagen.url_imagen_movil %}
                         <source 
                             media="(max-width: 768px)" 
-                            srcset="{{ imagen.url_imagen_movil|default:imagen.url_imagen_escritorio }}"
+                            srcset="{{ imagen.url_imagen_movil }}"
                         >
+                        {% endif %}
+                        <!-- Para escritorio: imagen principal -->
                         <img 
                             src="{{ imagen.url_imagen_escritorio }}" 
                             class="d-block w-100" 
                             alt="{{ imagen.titulo }}"
-                            style="width: 100%; height: 350px; object-fit: cover;"
                         >
                     </picture>
                 </a>
-                <!-- Botón opcional (solo en escritorio) - TAMAÑO AJUSTADO -->
+                <!-- Botón opcional (solo en escritorio) -->
                 {% if imagen.url_destino %}
                     <div class="carousel-caption d-none d-md-block">
                         <a href="{{ imagen.url_destino }}" class="btn btn-kova" style="font-size: 1rem; padding: 10px 20px; font-weight: bold;">
@@ -287,6 +294,7 @@
     </button>
 </div>
 
+<!-- El resto del contenido se mantiene igual -->
 <!-- Categorías -->
 <div class="container mt-5">
     <div class="categories-scroll">
