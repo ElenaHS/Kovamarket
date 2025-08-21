@@ -126,10 +126,10 @@
         object-fit: cover;
     }
 
-    /* Estilo para el botón del carrusel - MÁS GRANDE */
+    /* Estilo para el botón del carrusel - AJUSTADO A UN TAMAÑO MÁS ADECUADO */
     .carousel-caption .btn-kova {
-        font-size: 1.2rem;  /* Tamaño de letra más grande */
-        padding: 12px 24px; /* Botón más grande */
+        font-size: 1rem;    /* Reducido de 1.2rem a 1rem */
+        padding: 10px 20px; /* Reducido de 12px 24px a 10px 20px */
         border-radius: 6px; /* Bordes más redondeados */
         font-weight: bold;  /* Texto en negrita */
     }
@@ -265,10 +265,10 @@
                         >
                     </picture>
                 </a>
-                <!-- Botón opcional (solo en escritorio) - MÁS GRANDE -->
+                <!-- Botón opcional (solo en escritorio) - TAMAÑO AJUSTADO -->
                 {% if imagen.url_destino %}
                     <div class="carousel-caption d-none d-md-block">
-                        <a href="{{ imagen.url_destino }}" class="btn btn-kova" style="font-size: 1.2rem; padding: 12px 24px; font-weight: bold;">
+                        <a href="{{ imagen.url_destino }}" class="btn btn-kova" style="font-size: 1rem; padding: 10px 20px; font-weight: bold;">
                             {{ imagen.texto_boton }}
                         </a>
                     </div>
@@ -308,7 +308,7 @@
     <!-- Fila de orden y total -->
     <div class="ordenar-marco">
         <form method="get">
-            <label for="ordenar" class="mr-2">Ordenar por:</label>
+            <label for="ordenar" class="mr-2">Ordenar productos por:</label>
             <select name="ordenar" id="ordenar" onchange="this.form.submit()">
                 <option value="nombre" {% if request.GET.ordenar == 'nombre' %}selected{% endif %}>Nombre</option>
                 <option value="precio_asc" {% if request.GET.ordenar == 'precio_asc' %}selected{% endif %}>Menor precio</option>

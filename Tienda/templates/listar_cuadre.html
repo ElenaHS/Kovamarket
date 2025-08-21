@@ -44,7 +44,7 @@
         </table>
     </div>
 
-    <!-- Paginación Mejorada -->
+    <!-- Paginación Mejorada - MOSTRAR SOLO 5 PÁGINAS EN LUGAR DE 10 -->
     <div class="d-flex justify-content-center mt-4">
         <nav aria-label="Page navigation">
             <ul class="pagination">
@@ -59,10 +59,10 @@
                     <li class="page-item disabled"><span class="page-link" aria-hidden="true">&laquo;</span></li>
                 {% endif %}
 
-                <!-- Lógica para mostrar solo 10 páginas con puntos suspensivos -->
+                <!-- Lógica para mostrar solo 5 páginas con puntos suspensivos (en lugar de 10) -->
                 {% with total_pages=cuadres.paginator.num_pages current_page=cuadres.number %}
-                    {% if total_pages <= 10 %}
-                        <!-- Si hay 10 o menos páginas, mostrar todas -->
+                    {% if total_pages <= 5 %}
+                        <!-- Si hay 5 o menos páginas, mostrar todas -->
                         {% for num in cuadres.paginator.page_range %}
                             {% if num == current_page %}
                                 <li class="page-item active"><span class="page-link">{{ num }}</span></li>
@@ -71,11 +71,11 @@
                             {% endif %}
                         {% endfor %}
                     {% else %}
-                        <!-- Si hay más de 10 páginas, usar lógica avanzada -->
-                        {% if current_page <= 6 %}
-                            <!-- Mostrar páginas 1 a 8, luego puntos y última página -->
+                        <!-- Si hay más de 5 páginas, usar lógica avanzada -->
+                        {% if current_page <= 3 %}
+                            <!-- Mostrar páginas 1 a 4, luego puntos y última página -->
                             {% for num in cuadres.paginator.page_range %}
-                                {% if num <= 8 %}
+                                {% if num <= 4 %}
                                     {% if num == current_page %}
                                         <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                                     {% else %}
@@ -85,12 +85,12 @@
                             {% endfor %}
                             <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
                             <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
-                        {% elif current_page >= total_pages|add:"-5" %}
-                            <!-- Mostrar primera página, puntos y últimas 8 páginas -->
+                        {% elif current_page >= total_pages|add:"-2" %}
+                            <!-- Mostrar primera página, puntos y últimas 4 páginas -->
                             <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
                             <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
                             {% for num in cuadres.paginator.page_range %}
-                                {% if num >= total_pages|add:"-7" %}
+                                {% if num >= total_pages|add:"-3" %}
                                     {% if num == current_page %}
                                         <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                                     {% else %}
@@ -104,7 +104,7 @@
                             <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
                             
                             {% for num in cuadres.paginator.page_range %}
-                                {% if num >= current_page|add:"-3" and num <= current_page|add:"3" %}
+                                {% if num >= current_page|add:"-1" and num <= current_page|add:"1" %}
                                     {% if num == current_page %}
                                         <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                                     {% else %}

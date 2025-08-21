@@ -6,7 +6,6 @@
 {% block content %}
 <div class="container mt-4">
 
-
     <!-- Mensajes -->
     {% if messages %}
         <div class="mb-3">
@@ -65,30 +64,90 @@
         </table>
     </div>
 
-    <!-- Paginación -->
+    <!-- Paginación Mejorada - MOSTRAR SOLO 5 PÁGINAS -->
     <div class="d-flex justify-content-center mb-4">
-        <nav>
+        <nav aria-label="Page navigation">
             <ul class="pagination">
+                <!-- Flecha anterior -->
                 {% if productos.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?buscar={{ buscar }}&page={{ productos.previous_page_number }}">&laquo;</a>
+                        <a class="page-link" href="?buscar={{ buscar }}&page={{ productos.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
                     </li>
                 {% else %}
-                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                    <li class="page-item disabled"><span class="page-link" aria-hidden="true">&laquo;</span></li>
                 {% endif %}
 
-                {% for num in productos.paginator.page_range %}
-                    <li class="page-item {% if productos.number == num %}active{% endif %}">
-                        <a class="page-link" href="?buscar={{ buscar }}&page={{ num }}">{{ num }}</a>
-                    </li>
-                {% endfor %}
+                <!-- Lógica para mostrar solo 5 páginas con puntos suspensivos -->
+                {% with total_pages=productos.paginator.num_pages current_page=productos.number %}
+                    {% if total_pages <= 5 %}
+                        <!-- Si hay 5 o menos páginas, mostrar todas -->
+                        {% for num in productos.paginator.page_range %}
+                            {% if num == current_page %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="?buscar={{ buscar }}&page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <!-- Si hay más de 5 páginas, usar lógica avanzada -->
+                        {% if current_page <= 3 %}
+                            <!-- Mostrar páginas 1 a 4, luego puntos y última página -->
+                            {% for num in productos.paginator.page_range %}
+                                {% if num <= 4 %}
+                                    {% if num == current_page %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?buscar={{ buscar }}&page={{ num }}">{{ num }}</a></li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                            <li class="page-item"><a class="page-link" href="?buscar={{ buscar }}&page={{ total_pages }}">{{ total_pages }}</a></li>
+                        {% elif current_page >= total_pages|add:"-2" %}
+                            <!-- Mostrar primera página, puntos y últimas 4 páginas -->
+                            <li class="page-item"><a class="page-link" href="?buscar={{ buscar }}&page=1">1</a></li>
+                            <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                            {% for num in productos.paginator.page_range %}
+                                {% if num >= total_pages|add:"-3" %}
+                                    {% if num == current_page %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?buscar={{ buscar }}&page={{ num }}">{{ num }}</a></li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <!-- Mostrar primera página, puntos, páginas alrededor de la actual, puntos y última página -->
+                            <li class="page-item"><a class="page-link" href="?buscar={{ buscar }}&page=1">1</a></li>
+                            <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                            
+                            {% for num in productos.paginator.page_range %}
+                                {% if num >= current_page|add:"-1" and num <= current_page|add:"1" %}
+                                    {% if num == current_page %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?buscar={{ buscar }}&page={{ num }}">{{ num }}</a></li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                            <li class="page-item"><a class="page-link" href="?buscar={{ buscar }}&page={{ total_pages }}">{{ total_pages }}</a></li>
+                        {% endif %}
+                    {% endif %}
+                {% endwith %}
 
+                <!-- Flecha siguiente -->
                 {% if productos.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?buscar={{ buscar }}&page={{ productos.next_page_number }}">&raquo;</a>
+                        <a class="page-link" href="?buscar={{ buscar }}&page={{ productos.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
                     </li>
                 {% else %}
-                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                    <li class="page-item disabled"><span class="page-link" aria-hidden="true">&raquo;</span></li>
                 {% endif %}
             </ul>
         </nav>
@@ -259,6 +318,41 @@
     .tarjeta-producto-pequena .btn-outline-secondary.btn-sm {
         padding: 0 8px;
         font-size: 0.75rem;
+    }
+    
+    /* ESTILOS DE PAGINACIÓN PERSONALIZADOS */
+    .pagination .page-link {
+        color: #fc7319;
+        border: 1px solid #fc7319;
+        background-color: white;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+        color: white;
+        background-color: #fc7319;
+        border-color: #fc7319;
+    }
+
+    .pagination .page-item.active .page-link {
+        color: white;
+        background-color: #fc7319;
+        border-color: #fc7319;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        background-color: white;
+        border-color: #dee2e6;
+    }
+    
+    /* Estilo para los puntos suspensivos en la paginación */
+    .page-item-disabled-dots .page-link {
+        pointer-events: none;
+        cursor: default;
+        color: #6c757d;
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
     }
 </style>
 {% endblock %}

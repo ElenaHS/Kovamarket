@@ -4,135 +4,137 @@
 {% block title %}Listado de salidas{% endblock %}
 
 {% block content %}
-<div class="container-fluid vh-100 d-flex justify-content-center align-items-start pt-4">
-  <div class="col-11 col-sm-10 col-md-10 col-lg-8 col-xl-7">
-    <div class="card shadow-lg p-4 custom-card-width">
+<div class="container mt-4 mb-5">  <!-- Added mb-5 for bottom margin -->
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
+      <div class="card shadow-lg p-4">
 
-      <h5 class="text-center mb-4 text-kova">
-        <i class="fas fa-minus-circle me-2"></i> Listado de salidas
-      </h5>
+        <h5 class="text-center mb-4 text-kova">
+          <i class="fas fa-minus-circle me-2"></i> Listado de salidas
+        </h5>
 
-      <a href="{% url 'nueva_salida' %}" class="btn btn-kova">
-        <i class="fas fa-minus-circle me-2"></i> Registrar salida
-      </a>
+        <a href="{% url 'nueva_salida' %}" class="btn btn-kova mb-4">
+          <i class="fas fa-minus-circle me-2"></i> Registrar salida
+        </a>
 
-      {% if salidas %}
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light text-uppercase text-secondary small">
-            <tr>
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Motivo</th>
-              <th>Fecha de salida</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for salida in salidas %}
-            <tr>
-              <td>{{ salida.producto.nombre }}</td>
-              <td>{{ salida.cantidad }}</td>
-              <td>{{ salida.get_motivo_display }}</td>
-              <td>{{ salida.fecha_salida|date:"d/m/Y H:i" }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+        {% if salidas %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light text-uppercase text-secondary small">
+              <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Motivo</th>
+                <th>Fecha de salida</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for salida in salidas %}
+              <tr>
+                <td>{{ salida.producto.nombre }}</td>
+                <td>{{ salida.cantidad }}</td>
+                <td>{{ salida.get_motivo_display }}</td>
+                <td>{{ salida.fecha_salida|date:"d/m/Y H:i" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
 
-      <!-- Paginación Mejorada -->
-      <div class="d-flex justify-content-center mt-4">
-        <nav aria-label="Page navigation">
-          <ul class="pagination">
-            <!-- Flecha anterior -->
-            {% if salidas.has_previous %}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ salidas.previous_page_number }}" aria-label="Previous">
-                  <span aria-hidden="true">&laquo;</span>
-                </a>
-              </li>
-            {% else %}
-              <li class="page-item disabled"><span class="page-link" aria-hidden="true">&laquo;</span></li>
-            {% endif %}
-
-            <!-- Lógica para mostrar solo 10 páginas con puntos suspensivos -->
-            {% with total_pages=salidas.paginator.num_pages current_page=salidas.number %}
-              {% if total_pages <= 10 %}
-                <!-- Si hay 10 o menos páginas, mostrar todas -->
-                {% for num in salidas.paginator.page_range %}
-                  {% if num == current_page %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                  {% else %}
-                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                  {% endif %}
-                {% endfor %}
+        <!-- Paginación Mejorada - MOSTRAR SOLO 5 PÁGINAS EN LUGAR DE 10 -->
+        <div class="d-flex justify-content-center mt-4">
+          <nav aria-label="Page navigation">
+            <ul class="pagination">
+              <!-- Flecha anterior -->
+              {% if salidas.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ salidas.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
               {% else %}
-                <!-- Si hay más de 10 páginas, usar lógica avanzada -->
-                {% if current_page <= 6 %}
-                  <!-- Mostrar páginas 1 a 8, luego puntos y última página -->
+                <li class="page-item disabled"><span class="page-link" aria-hidden="true">&laquo;</span></li>
+              {% endif %}
+
+              <!-- Lógica para mostrar solo 5 páginas con puntos suspensivos (en lugar de 10) -->
+              {% with total_pages=salidas.paginator.num_pages current_page=salidas.number %}
+                {% if total_pages <= 5 %}
+                  <!-- Si hay 5 o menos páginas, mostrar todas -->
                   {% for num in salidas.paginator.page_range %}
-                    {% if num <= 8 %}
-                      {% if num == current_page %}
-                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                      {% else %}
-                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                      {% endif %}
-                    {% endif %}
-                  {% endfor %}
-                  <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
-                  <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
-                {% elif current_page >= total_pages|add:"-5" %}
-                  <!-- Mostrar primera página, puntos y últimas 8 páginas -->
-                  <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
-                  <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
-                  {% for num in salidas.paginator.page_range %}
-                    {% if num >= total_pages|add:"-7" %}
-                      {% if num == current_page %}
-                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                      {% else %}
-                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                      {% endif %}
+                    {% if num == current_page %}
+                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                      <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
                     {% endif %}
                   {% endfor %}
                 {% else %}
-                  <!-- Mostrar primera página, puntos, páginas alrededor de la actual, puntos y última página -->
-                  <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
-                  <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
-                  
-                  {% for num in salidas.paginator.page_range %}
-                    {% if num >= current_page|add:"-3" and num <= current_page|add:"3" %}
-                      {% if num == current_page %}
-                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                      {% else %}
-                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                  <!-- Si hay más de 5 páginas, usar lógica avanzada -->
+                  {% if current_page <= 3 %}
+                    <!-- Mostrar páginas 1 a 4, luego puntos y última página -->
+                    {% for num in salidas.paginator.page_range %}
+                      {% if num <= 4 %}
+                        {% if num == current_page %}
+                          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                          <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
                       {% endif %}
-                    {% endif %}
-                  {% endfor %}
-                  
-                  <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
-                  <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+                    {% endfor %}
+                    <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+                  {% elif current_page >= total_pages|add:"-2" %}
+                    <!-- Mostrar primera página, puntos y últimas 4 páginas -->
+                    <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+                    <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                    {% for num in salidas.paginator.page_range %}
+                      {% if num >= total_pages|add:"-3" %}
+                        {% if num == current_page %}
+                          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                          <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  {% else %}
+                    <!-- Mostrar primera página, puntos, páginas alrededor de la actual, puntos y última página -->
+                    <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+                    <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                    
+                    {% for num in salidas.paginator.page_range %}
+                      {% if num >= current_page|add:"-1" and num <= current_page|add:"1" %}
+                        {% if num == current_page %}
+                          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                          <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                    
+                    <li class="page-item page-item-disabled-dots"><span class="page-link">...</span></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+                  {% endif %}
                 {% endif %}
+              {% endwith %}
+
+              <!-- Flecha siguiente -->
+              {% if salidas.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ salidas.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link" aria-hidden="true">&raquo;</span></li>
               {% endif %}
-            {% endwith %}
+            </ul>
+          </nav>
+        </div>
 
-            <!-- Flecha siguiente -->
-            {% if salidas.has_next %}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ salidas.next_page_number }}" aria-label="Next">
-                  <span aria-hidden="true">&raquo;</span>
-                </a>
-              </li>
-            {% else %}
-              <li class="page-item disabled"><span class="page-link" aria-hidden="true">&raquo;</span></li>
-            {% endif %}
-          </ul>
-        </nav>
+        {% else %}
+          <p class="text-center text-muted">No hay salidas registradas.</p>
+        {% endif %}
+
       </div>
-
-      {% else %}
-        <p class="text-center text-muted">No hay salidas registradas.</p>
-      {% endif %}
-
     </div>
   </div>
 </div>
@@ -142,12 +144,6 @@
     color: #fc7319;
   }
 
-  /* Ancho personalizado para la tarjeta */
-  .custom-card-width {
-    max-width: 950px;
-    margin: auto;
-  }
-  
   /* ESTILOS DE PAGINACIÓN PERSONALIZADOS */
   .pagination .page-link {
     color: #fc7319;
